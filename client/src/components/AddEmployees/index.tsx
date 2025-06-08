@@ -505,6 +505,24 @@ const AddEmployees: React.FC = () => {
     }
   };
 
+  const handleEditLeave = (employeeIndex: number, leaveData: { id: string; startDate: string; endDate: string; type: string; hoursPerDay: number }) => {
+    if (currentEmployeeList) {
+      const employeeToUpdate = employees[employeeIndex];
+      const updatedLeave = (employeeToUpdate.leave || []).map(l =>
+        l.id === leaveData.id ? { ...leaveData, leaveType: leaveData.type } : l
+      );
+      updateEmployeeProperty(employeeIndex, 'leave', updatedLeave);
+    }
+  };
+
+  const handleRemoveLeave = (employeeIndex: number, leaveId: string) => {
+    if (currentEmployeeList) {
+      const employeeToUpdate = employees[employeeIndex];
+      const updatedLeave = (employeeToUpdate.leave || []).filter(l => l.id !== leaveId);
+      updateEmployeeProperty(employeeIndex, 'leave', updatedLeave);
+    }
+  };
+
   const handleSaveFixedShifts = (fixedShifts: { [day: string]: string[] }) => {
     if (assignShiftsModalState.employeeIndex === null || !currentEmployeeList) return;
     // Deep copy here if needed for fixed shifts updates too
@@ -953,10 +971,21 @@ const AddEmployees: React.FC = () => {
             isOpen={leaveModalState.isOpen}
             onClose={() => setLeaveModalState({ isOpen: false, employeeIndex: null })}
             employeeName={employees[leaveModalState.employeeIndex].name}
+            existingLeaves={employees[leaveModalState.employeeIndex].leave || []}
             onSave={(leave) => {
-            if (leaveModalState.employeeIndex !== null) {
+              if (leaveModalState.employeeIndex !== null) {
                 handleAddLeave(leaveModalState.employeeIndex, leave);
-            }
+                }
+            }}
+            onEdit={(leave) => {
+              if (leaveModalState.employeeIndex !== null) {
+                handleEditLeave(leaveModalState.employeeIndex, leave);
+              }
+            }}
+            onDelete={(leaveId) => {
+              if (leaveModalState.employeeIndex !== null) {
+                handleRemoveLeave(leaveModalState.employeeIndex, leaveId);
+              }
             }}
         />
       )}

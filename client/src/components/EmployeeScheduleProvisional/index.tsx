@@ -1064,11 +1064,29 @@ const EmployeeScheduleTable: React.FC = () => {
                                  {/* Row con 4 botones/iconos uniformemente espaciados */}
                                  <div className="flex justify-between items-center w-full px-1 mb-1">
                                      {/* Primer botón: Lock Checkbox */}
-                                     <input
+                                    <input
                                          type="checkbox"
                                          className="lock-shift h-3 w-3"
                                          checked={!!isLocked}
-                                         readOnly // Make checkbox read-only for static demo
+                                         onChange={(e) => {
+                                          const newEmployees = [...employees];
+                                          const employeeToUpdate = newEmployees[index];
+
+                                          if (!employeeToUpdate.lockedShifts) {
+                                            employeeToUpdate.lockedShifts = {};
+                                          }
+
+                                          if (e.target.checked) {
+                                            employeeToUpdate.lockedShifts[dateString] = assignedShift || '';
+                                          } else {
+                                            delete employeeToUpdate.lockedShifts[dateString];
+                                          }
+
+                                          const currentList = getCurrentList();
+                                          if (currentList) {
+                                            updateList(currentList.id, { employees: newEmployees });
+                                          }
+                                        }}
                                          title="Check This Box To Fix The Shift For The Chosen Day As An Employee Request, Ensuring It Can't Be Changed By Mistake Unless You Uncheck It."
                                      />
                                      
