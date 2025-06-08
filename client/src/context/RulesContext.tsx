@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useEmployeeLists } from './EmployeeListsContext';
 
 export interface RulesState {
@@ -26,8 +26,19 @@ const today = new Date();
 const nextMonth = new Date(today);
 nextMonth.setMonth(today.getMonth() + 1);
 
-const formatDate = (date: Date) => {
-  return date.toISOString().split('T')[0];
+const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+const defaultRules: RulesState = {
+  startDate: formatDate(today),
+  endDate: formatDate(nextMonth),
+  maxConsecutiveShifts: '5',
+  minDaysOffAfterMax: '2',
+  minWeekendsOffPerMonth: '2',
+  minRestHoursBetweenShifts: '12',
+  writtenRule1: '',
+  writtenRule2: '',
+  minHoursPerWeek: '40',
+  minHoursPerTwoWeeks: '80'
 };
 
 export const RulesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -43,26 +54,23 @@ export const RulesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }
   
-  const { getCurrentList, updateList } = employeeListsContext;
+  const { getCurrentList, updateList, refreshTrigger } = employeeListsContext;
   
   // Usar el operador opcional para evitar errores si getCurrentList es undefined
   const currentList = getCurrentList?.();
-  const rules = currentList?.rules || {
-    startDate: formatDate(today),
-    endDate: formatDate(nextMonth),
-    maxConsecutiveShifts: '5',
-    minDaysOffAfterMax: '2',
-    minWeekendsOffPerMonth: '2',
-    minRestHoursBetweenShifts: '12',
-    writtenRule1: '',
-    writtenRule2: '',
-    minHoursPerWeek: '40',
-    minHoursPerTwoWeeks: '80'
-  };
+  const [rules, setRules] = useState<RulesState>(currentList?.rules || defaultRules);
+
+  useEffect(() => {
+    const updatedList = getCurrentList?.();
+    setRules(updatedList?.rules || defaultRules);
+  }, [getCurrentList, refreshTrigger]);
 
   const updateRules = (newRules: Partial<RulesState>) => {
-    if (currentList) {
-      updateList(currentList.id, { rules: { ...rules, ...newRules } });
+    const list = getCurrentList?.();
+    const updated = { ...rules, ...newRules };
+    setRules(updated);
+    if (list) {
+      updateList(list.id, { rules: updated });
     }
   };
 

@@ -31,6 +31,15 @@ const styles = {
   }
 };
 
+const formatDisplayDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const day = date.getUTCDate();
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const formatPreferences = (preferences: (number | null)[], shifts: ShiftRow[]) => {
   if (!preferences?.length) return 'None';
 
@@ -120,6 +129,15 @@ const formatBlockedShifts = (blockedShifts: { [shiftId: string]: { blockedDays: 
       }
     })
     .join(', ');
+};
+
+const formatDateFriendly = (dateStr: string) => {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const month = date.toLocaleString('en-US', { month: 'short' });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
 };
 
 const ScheduleRulesTable: React.FC = () => {
@@ -230,13 +248,13 @@ const ScheduleRulesTable: React.FC = () => {
               <tr>
                 <td className="border px-4 py-2">Start Date</td>
                 <td className="border px-4 py-2">
-                  {rules.startDate}
+                  {formatDateFriendly(rules.startDate)}
                 </td>
               </tr>
               <tr>
                 <td className="border px-4 py-2">End Date</td>
                 <td className="border px-4 py-2">
-                  {rules.endDate}
+                {formatDateFriendly(rules.endDate)}
                 </td>
               </tr>
               <tr>

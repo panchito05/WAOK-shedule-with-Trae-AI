@@ -187,7 +187,7 @@ function getPreferenceAndBlockedInfo(employee: Employee, shifts: Shift[]): strin
 
     // Blocked Shifts
     html += '<div>';
-    html += '<strong>Blocked:</strong> ';
+    html += '<strong>Blocked:</strong><br>';
     
     const blockedShiftsText = formatBlockedShifts(employee.blockedShifts, shifts);
     html += blockedShiftsText;

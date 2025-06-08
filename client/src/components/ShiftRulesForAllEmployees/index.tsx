@@ -17,6 +17,16 @@ interface ShiftRulesFormData {
 
 const ShiftRules: React.FC = () => {
   const { rules, updateRules } = useRules();
+  const startRef = React.useRef<HTMLInputElement>(null);
+  const endRef = React.useRef<HTMLInputElement>(null);
+
+  const openPicker = (ref: React.RefObject<HTMLInputElement>) => {
+    if (ref.current) {
+      // showPicker is not supported in all browsers, so we call it conditionally
+      (ref.current as HTMLInputElement).showPicker?.();
+      ref.current.focus();
+    }
+  };
 
   const handleNumberChange = (field: keyof ShiftRulesFormData, value: string, min: number, max: number) => {
     const numValue = parseInt(value);
@@ -38,24 +48,32 @@ const ShiftRules: React.FC = () => {
             <span className="w-32 text-gray-700">Start Date:</span>
             <div className="relative flex-1">
               <input
+                ref={startRef}
                 type="date"
                 value={rules.startDate}
                 onChange={(e) => updateRules({ startDate: e.target.value })}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#19b08d] focus:border-[#19b08d] transition-colors"
               />
-              <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Calendar
+                className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 cursor-pointer"
+                onClick={() => openPicker(startRef)}
+              />
             </div>
           </div>
           <div className="flex items-center bg-gray-50 p-3 rounded">
             <span className="w-32 text-gray-700">End Date:</span>
             <div className="relative flex-1">
               <input
+              ref={endRef}
                 type="date"
                 value={rules.endDate}
                 onChange={(e) => updateRules({ endDate: e.target.value })}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#19b08d] focus:border-[#19b08d] transition-colors"
               />
-              <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Calendar
+                className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 cursor-pointer"
+                onClick={() => openPicker(endRef)}
+              />
             </div>
           </div>
         </div>
