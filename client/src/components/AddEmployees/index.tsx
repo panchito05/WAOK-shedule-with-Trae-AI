@@ -431,6 +431,11 @@ const AddEmployees: React.FC = () => {
 
   // Keep handleRemoveEmployee - uses filter which returns a new array
   const handleRemoveEmployee = (employeeId: string) => {
+    // Advertencia y confirmación antes de eliminar
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este empleado?\n\nEsta acción no se puede deshacer.')) {
+      return; // Cancelar si el usuario no confirma
+    }
+  
     if (currentEmployeeList) {
       const updatedEmployees = employees.filter(emp => emp.id !== employeeId);
       updateList(currentEmployeeList.id, { employees: updatedEmployees });

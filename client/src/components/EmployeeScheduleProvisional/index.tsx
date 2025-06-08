@@ -987,7 +987,7 @@ const EmployeeScheduleTable: React.FC = () => {
                       >
                            {isOnLeave ? (
                                // Render leave info if on leave
-                               <div className="text-center text-sm" style={{ lineHeight: 1.2, padding: '4px', backgroundColor: '#FFA500', color: '#000' }}> {/* Placeholder color */}
+                               <div className="text-center text-sm" style={{ lineHeight: 1.2, padding: '4px', backgroundColor: '#19b08d', color: '#000' }}> {/* Color verde solicitado */}
                                     {employee.leave?.find(l => l.startDate <= dateString && l.endDate >= dateString)?.leaveType || 'Leave'}
                                      <br />
                                      <small style={{ fontSize: '0.85em', color: 'inherit' }}>({employee.leave?.find(l => l.startDate <= dateString && l.endDate >= dateString)?.hoursPerDay || 0} hrs/day)</small>

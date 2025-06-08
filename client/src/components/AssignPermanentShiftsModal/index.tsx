@@ -28,6 +28,9 @@ const AssignPermanentShiftsModal: React.FC<AssignPermanentShiftsModalProps> = ({
       ...prev,
       [day]: value === 'day-off' ? ['day-off'] : [value]
     }));
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('🔧 Permanent shift change', { day, value });
+    }
   };
 
   const handleSave = () => {
@@ -48,7 +51,7 @@ const AssignPermanentShiftsModal: React.FC<AssignPermanentShiftsModalProps> = ({
         </button>
 
         <h2 className="text-xl font-bold text-center text-green-600 mb-6">
-          Assigning Fixed Shifts for: {employeeName}
+          Assigning Permanent Shifts for: {employeeName}
         </h2>
 
         <div className="space-y-4">
@@ -62,8 +65,8 @@ const AssignPermanentShiftsModal: React.FC<AssignPermanentShiftsModalProps> = ({
               >
                 <option value="">Select shift or day off</option>
                 <option value="day-off">Day Off</option>
-                {shifts.map((shift, index) => (
-                  <option key={index} value={`uid_${Math.random().toString(36).substr(2, 15)}`}>
+                {shifts.map((shift) => (
+                  <option key={shift.id} value={shift.id}>
                     {shift.startTime} - {shift.endTime}
                   </option>
                 ))}
