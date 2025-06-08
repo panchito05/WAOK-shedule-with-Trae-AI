@@ -996,7 +996,8 @@ const EmployeeScheduleTable: React.FC = () => {
                                // Render shift select if not on leave
                               <div className="flex flex-col items-center">
                                  {/* Shift Select */}
-                                 <select
+                                 <div className="flex items-center w-full">
+                                   <select
                                      className={`w-full border border-gray-300 rounded px-1 py-0.5 text-sm mb-1 focus:outline-none
                                         ${assignedShift === 'day-off' ? 'bg-yellow-200' : ''}
                                      `}
@@ -1031,7 +1032,7 @@ const EmployeeScheduleTable: React.FC = () => {
                                         });
                                       }
                                    }}
-                                 >
+                                   >
                                      <option value="" data-en="Select Shift" data-es="Seleccionar Turno">Select Shift</option>
                                      <option value="day-off" data-en="Day Off" data-es="Día Libre">Day Off</option>
                                      {timeRanges.map(shift => (
@@ -1047,7 +1048,18 @@ const EmployeeScheduleTable: React.FC = () => {
                                      ))}
                                       {/* Add Leave option - Placeholder */}
                                       <option value="add-leave" disabled>Add Leave</option>
-                                 </select>
+                                      </select>
+                                   {manualShift === undefined && fixedShift && !isAutoDayOff && (
+                                     <span
+                                       className="ml-1 text-xs"
+                                       title="Permanent Shift"
+                                       data-en="Permanent Shift"
+                                       data-es="Turno Permanente"
+                                     >
+                                       📌
+                                     </span>
+                                   )}
+                                 </div>
 
                                  {/* Row con 4 botones/iconos uniformemente espaciados */}
                                  <div className="flex justify-between items-center w-full px-1 mb-1">
