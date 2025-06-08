@@ -239,11 +239,31 @@ function formatBlockedShifts(blockedShifts: { [shiftId: string]: { blockedDays: 
 }
 
 function calculateShiftHours(start: string, end: string, lunchBreak: number = 0): number {
-    const startTime = new Date(`2000-01-01T${start}`);
-    let endTime = new Date(`2000-01-01T${end}`);
+  if (!start || !end) return 0;
+
+  const convertTo24Hour = (time: string): string => {
+      if (time.includes('AM') || time.includes('PM')) {
+          const [timePart, period] = time.split(' ');
+          let [hours, minutes] = timePart.split(':').map(Number);
+
+          if (period === 'PM' && hours !== 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+
+          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+      return time;
+  };
+
+  const start24 = convertTo24Hour(start);
+  const end24 = convertTo24Hour(end);
+
+  const startTime = new Date(`2000-01-01T${start24}:00`);
+  let endTime = new Date(`2000-01-01T${end24}:00`);
+
     if (endTime < startTime) {
         endTime.setDate(endTime.getDate() + 1);
     }
+
     let diff = endTime.getTime() - startTime.getTime();
     if (lunchBreak) {
         diff -= lunchBreak * 60000;
@@ -716,8 +736,8 @@ const EmployeeScheduleTable: React.FC = () => {
   const timeRanges = useMemo(() => {
     const ranges = shifts.map((shift, index) => ({
       id: shift.id, // Use stable ID from context
-      start: shift.startTime.split(' ')[0],
-      end: shift.endTime.split(' ')[0],
+      start: shift.startTime,
+      end: shift.endTime,
       startTime: shift.startTime, // Guardamos el tiempo completo con AM/PM
       endTime: shift.endTime,     // Guardamos el tiempo completo con AM/PM
       duration: shift.duration,
@@ -865,8 +885,11 @@ const EmployeeScheduleTable: React.FC = () => {
                         return (
                             <th
                                 key={dateString}
-                                className={`px-2 py-1 text-center border border-gray-300 relative ${isSunday ? 'bg-gray-100' : ''}`}
-                                style={{ width: `${columnWidths.dates}px` }}
+                                className={`px-2 py-1 text-center border border-gray-300 relative`}
+                                style={{ 
+                                     width: `${columnWidths.dates}px`,
+                                     backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
+                                 }}
                             >
                                 {/* Using dangerouslySetInnerHTML to render formatted date HTML */}
                                 <div dangerouslySetInnerHTML={{ __html: formatDate(date) }}></div>
@@ -980,10 +1003,13 @@ const EmployeeScheduleTable: React.FC = () => {
                     return (
                       <td
                          key={dateString}
-                         className={`px-1 py-1 border border-gray-300 ${isSunday ? 'bg-gray-100' : ''}
-                           ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} // Highlight if rules violated (placeholder)
+                         className={`px-1 py-1 border border-gray-300 ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} // Highlight if rules violated (placeholder)
                          `}
-                         style={{ position: 'relative', width: `${columnWidths.dates}px` }} // Needed for absolute positioning of swap button
+                         style={{ 
+                              position: 'relative', 
+                              width: `${columnWidths.dates}px`,
+                              backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
+                          }} // Needed for absolute positioning of swap button
                       >
                            {isOnLeave ? (
                                // Render leave info if on leave
@@ -1217,7 +1243,10 @@ const EmployeeScheduleTable: React.FC = () => {
                             return (
                                 <td
                                     key={dateString}
-                                    className={`px-2 py-1 border border-gray-300 text-center ${isSunday ? 'bg-gray-100' : ''}`}
+                                    className={`px-2 py-1 border border-gray-300 text-center`}
+                                    style={{
+                                         backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
+                                     }}
                                     style={{ width: `${columnWidths.dates}px` }}
                                 >
                                     <div className="flex flex-col items-center">
