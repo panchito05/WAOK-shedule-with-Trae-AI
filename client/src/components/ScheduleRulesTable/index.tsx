@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import { parseISO, parse, format } from 'date-fns';
+import { formatFriendlyDate } from '../../utils/dateUtils';
 import { useShiftContext } from '../../context/ShiftContext';
 import { useRules } from '../../context/RulesContext';
 import { usePersonnelData } from '../../context/PersonnelDataContext';
@@ -125,21 +125,6 @@ const formatBlockedShifts = (blockedShifts: { [shiftId: string]: { blockedDays: 
     .join(', ');
 };
 
-const parseDate = (dateStr: string) => {
-  if (dateStr.includes('-')) {
-    return parseISO(dateStr);
-  }
-  if (dateStr.includes('/')) {
-    return parse(dateStr, 'MM/dd/yyyy', new Date());
-  }
-  return new Date(dateStr);
-};
-
-const formatDateFriendly = (dateStr: string) => {
-  const date = parseDate(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return format(date, 'd/MMMM/yyyy');
-};
 
 const ScheduleRulesTable: React.FC = () => {
   const { shifts } = useShiftContext();
@@ -249,13 +234,13 @@ const ScheduleRulesTable: React.FC = () => {
               <tr>
                 <td className="border px-4 py-2">Start Date</td>
                 <td className="border px-4 py-2">
-                  {formatDateFriendly(rules.startDate)}
+                {formatFriendlyDate(rules.startDate)}
                 </td>
               </tr>
               <tr>
                 <td className="border px-4 py-2">End Date</td>
                 <td className="border px-4 py-2">
-                {formatDateFriendly(rules.endDate)}
+                {formatFriendlyDate(rules.endDate)}
                 </td>
               </tr>
               <tr>
