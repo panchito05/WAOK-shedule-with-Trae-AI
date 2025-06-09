@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
+import { parseISO, parse, format } from 'date-fns';
 import { useShiftContext } from '../../context/ShiftContext';
 import { useRules } from '../../context/RulesContext';
 import { usePersonnelData } from '../../context/PersonnelDataContext';
@@ -32,12 +33,9 @@ const styles = {
 };
 
 const formatDisplayDate = (dateStr: string) => {
-  const date = new Date(dateStr);
+  const date = parseDate(dateStr);
   if (isNaN(date.getTime())) return dateStr;
-  const day = date.getUTCDate();
-  const month = date.toLocaleString('en-US', { month: 'long' });
-  const year = date.getUTCFullYear();
-  return `${day}/${month}/${year}`;
+  return format(date, 'd/MMMM/yyyy');
 };
 
 const formatPreferences = (preferences: (number | null)[], shifts: ShiftRow[]) => {
@@ -79,15 +77,11 @@ const formatLeaves = (leaves: { startDate: string; endDate: string; leaveType: s
   if (!leaves || leaves.length === 0) return 'No leaves';
   return leaves
     .map(leave => {
-      const startDate = new Date(leave.startDate);
-      const endDate = new Date(leave.endDate);
-      const formatDate = (date: Date) => {
-        const day = date.getDate();
-        const month = date.toLocaleString('en-US', { month: 'long' });
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      };
-      return `${leave.leaveType}: ${formatDate(startDate)} to ${formatDate(endDate)} (${leave.hoursPerDay} hrs/day)`;
+      const startDate = parseDate(leave.startDate);
+      const endDate = parseDate(leave.endDate);
+      const formattedStart = isNaN(startDate.getTime()) ? leave.startDate : format(startDate, 'd/MMMM/yyyy');
+      const formattedEnd = isNaN(endDate.getTime()) ? leave.endDate : format(endDate, 'd/MMMM/yyyy');
+      return `${leave.leaveType}: ${formattedStart} to ${formattedEnd} (${leave.hoursPerDay} hrs/day)`;
     })
     .join(', ');
 };
@@ -131,13 +125,20 @@ const formatBlockedShifts = (blockedShifts: { [shiftId: string]: { blockedDays: 
     .join(', ');
 };
 
+const parseDate = (dateStr: string) => {
+  if (dateStr.includes('-')) {
+    return parseISO(dateStr);
+  }
+  if (dateStr.includes('/')) {
+    return parse(dateStr, 'MM/dd/yyyy', new Date());
+  }
+  return new Date(dateStr);
+};
+
 const formatDateFriendly = (dateStr: string) => {
-  const date = new Date(dateStr);
+  const date = parseDate(dateStr);
   if (isNaN(date.getTime())) return dateStr;
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const day = date.getDate();
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  return format(date, 'd/MMMM/yyyy');
 };
 
 const ScheduleRulesTable: React.FC = () => {
