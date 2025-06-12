@@ -342,12 +342,11 @@ const SelectEmployeesForThisCombinationWorkingHours: React.FC = () => {
                 >
                   <option value="">Select Shift</option>
                   {shifts.map((shift, index) => {
-                    const shiftId = `uid_${Math.random().toString(36).substr(2, 15)}`;
-                    const isDisabled = column.bottomShift.shiftId === shiftId;
+                    const isDisabled = column.bottomShift.shiftId === shift.id;
                     return (
                       <option 
                         key={index} 
-                        value={shiftId} 
+                        value={shift.id} 
                         disabled={isDisabled}
                         className={isDisabled ? "text-gray-400" : ""}
                       >
@@ -378,12 +377,11 @@ const SelectEmployeesForThisCombinationWorkingHours: React.FC = () => {
                 >
                   <option value="">Select Shift</option>
                   {shifts.map((shift, index) => {
-                    const shiftId = `uid_${Math.random().toString(36).substr(2, 15)}`;
-                    const isDisabled = column.topShift.shiftId === shiftId;
+                    const isDisabled = column.topShift.shiftId === shift.id;
                     return (
                       <option 
                         key={index} 
-                        value={shiftId} 
+                        value={shift.id} 
                         disabled={isDisabled}
                         className={isDisabled ? "text-gray-400" : ""}
                       >
