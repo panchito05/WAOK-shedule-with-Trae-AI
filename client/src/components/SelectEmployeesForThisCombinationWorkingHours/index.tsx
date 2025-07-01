@@ -172,17 +172,29 @@ const SelectEmployeesForThisCombinationWorkingHours: React.FC = () => {
     return shift?.duration || "N/A";
   };
   
-  // Función para convertir la duración del turno de formato "8h 0m" a horas decimales
+  // Función para convertir la duración del turno de formato "8h 0m" o "8:00" a horas decimales
   const durationToHours = (duration: string): number => {
     if (duration === "N/A") return 0;
     
+    // Intentar formato "8h 0m"
     const hoursMatch = duration.match(/(\d+)h/);
     const minutesMatch = duration.match(/(\d+)m/);
     
-    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-    const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+    if (hoursMatch || minutesMatch) {
+      const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+      const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+      return hours + (minutes / 60);
+    }
     
-    return hours + (minutes / 60);
+    // Intentar formato "8:00"
+    const timeMatch = duration.match(/(\d+):(\d+)/);
+    if (timeMatch) {
+      const hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      return hours + (minutes / 60);
+    }
+    
+    return 0;
   };
   
   // Calcular el total de horas para una columna
@@ -342,12 +354,11 @@ const SelectEmployeesForThisCombinationWorkingHours: React.FC = () => {
                 >
                   <option value="">Select Shift</option>
                   {shifts.map((shift, index) => {
-                    const shiftId = `uid_${Math.random().toString(36).substr(2, 15)}`;
-                    const isDisabled = column.bottomShift.shiftId === shiftId;
+                    const isDisabled = column.bottomShift.shiftId === shift.id;
                     return (
                       <option 
                         key={index} 
-                        value={shiftId} 
+                        value={shift.id} 
                         disabled={isDisabled}
                         className={isDisabled ? "text-gray-400" : ""}
                       >
@@ -378,12 +389,11 @@ const SelectEmployeesForThisCombinationWorkingHours: React.FC = () => {
                 >
                   <option value="">Select Shift</option>
                   {shifts.map((shift, index) => {
-                    const shiftId = `uid_${Math.random().toString(36).substr(2, 15)}`;
-                    const isDisabled = column.topShift.shiftId === shiftId;
+                    const isDisabled = column.topShift.shiftId === shift.id;
                     return (
                       <option 
                         key={index} 
-                        value={shiftId} 
+                        value={shift.id} 
                         disabled={isDisabled}
                         className={isDisabled ? "text-gray-400" : ""}
                       >
