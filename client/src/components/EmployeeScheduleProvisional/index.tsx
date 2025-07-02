@@ -26,6 +26,8 @@ interface Shift {
   isOvertimeActiveForShift?: boolean;
   disableOvertime?: boolean;
   overtimeEntries?: ShiftOvertime[];
+  name?: string; // Custom name for the shift
+  color?: string; // Custom color for the shift
 }
 
 // Estructura específica de Employee para este componente que extiende CommonEmployee
@@ -765,7 +767,9 @@ const EmployeeScheduleTable: React.FC = () => {
         Friday: shiftData[index]?.counts[5] || 0,
         Saturday: shiftData[index]?.counts[6] || 0
       },
-      shiftComments: ''
+      shiftComments: '',
+      name: shift.name,
+      color: shift.color
     }));
     if (process.env.NODE_ENV !== 'production') {
       console.debug('🔧 timeRanges generated:', ranges);
@@ -1294,6 +1298,10 @@ const EmployeeScheduleTable: React.FC = () => {
                                  <div className="flex items-center w-full">
                                    <select
                                      className="w-full border border-gray-300 rounded px-1 py-0.5 text-sm mb-1 focus:outline-none"
+                                    style={{
+                                      backgroundColor: assignedShift && timeRanges.find(s => s.id === assignedShift)?.color || 'white',
+                                      color: assignedShift && timeRanges.find(s => s.id === assignedShift)?.color ? 'white' : 'black'
+                                    }}
                                      value={assignedShift || ''} // Use assignedShift as the value
                                      disabled={!!fixedShift || !!isLocked || !!isAutoDayOff} // Disabled if fixed, locked, or auto day off
                                      onChange={(e) => {
@@ -1335,7 +1343,7 @@ const EmployeeScheduleTable: React.FC = () => {
                                              disabled={employee.unavailableShifts?.[timeRanges.indexOf(shift)]?.includes(date.getUTCDay())} // Disable if blocked (placeholder check)
                                              title={employee.unavailableShifts?.[timeRanges.indexOf(shift)]?.includes(date.getUTCDay()) ? 'Blocked' : ''}
                                          >
-                                             {convertTo12Hour(shift.start)} - {convertTo12Hour(shift.end)}
+                                             {shift.name || `${convertTo12Hour(shift.start)} - ${convertTo12Hour(shift.end)}`}
                                               {employee.unavailableShifts?.[timeRanges.indexOf(shift)]?.includes(date.getUTCDay()) ? ' (Blocked)' : ''}
                                          </option>
                                      ))}
@@ -1498,7 +1506,7 @@ const EmployeeScheduleTable: React.FC = () => {
                          {/* Shift Info Cell */}
                          <td className="px-2 py-1 border border-gray-300" style={{ width: `${columnWidths.employees}px` }}>
                              <div className="flex flex-col">
-                                 <span>{convertTo12Hour(shift.start)} - {convertTo12Hour(shift.end)}</span>
+                                 <span style={{ color: shift.color || 'inherit' }}>{shift.name || `${convertTo12Hour(shift.start)} - ${convertTo12Hour(shift.end)}`}</span>
                                   {/* Overtime Button with Available Count */}
                                   <button 
                                     onClick={() => setOvertimeModal({ 

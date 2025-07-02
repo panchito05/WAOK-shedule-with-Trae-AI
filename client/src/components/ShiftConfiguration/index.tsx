@@ -208,12 +208,14 @@ const ShiftConfiguration: React.FC = () => {
       duration,
       lunchBreakDeduction: newShift.lunchBreakDeduction,
       isOvertimeActive: false,
-      overtimeEntries: []
+      overtimeEntries: [],
+      name: newShift.name,
+      color: newShift.color
     };
 
     addShift(newShiftRow);
     setIsModalOpen(false);
-    setNewShift({ startTime: '', endTime: '', lunchBreakDeduction: 0 });
+    setNewShift({ startTime: '', endTime: '', lunchBreakDeduction: 0, name: '', color: '' });
   };
 
   return (
