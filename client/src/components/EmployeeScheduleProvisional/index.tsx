@@ -6,6 +6,7 @@ import { useShiftContext } from '../../context/ShiftContext';
 import { usePersonnelData } from '../../context/PersonnelDataContext';
 import { useSelectedEmployees } from '../../context/SelectedEmployeesContext';
 import OvertimeModal from '../OvertimeModal';
+import { CommentModal } from '../CommentModal';
 import { ShiftRow, Employee as CommonEmployee, Rules as CommonRules, ShiftOvertime } from '../../types/common';
 
 // Estructura específica de Shift para este componente (reemplaza la extensión por una combinación)
@@ -786,6 +787,23 @@ const EmployeeScheduleTable: React.FC = () => {
     shift: null
   });
 
+  // Estado para el modal de comentarios
+  const [commentModal, setCommentModal] = useState<{
+    isOpen: boolean;
+    employeeIndex: number | null;
+    employeeName: string;
+    date: string;
+    shiftName: string;
+    currentComment: string;
+  }>({
+    isOpen: false,
+    employeeIndex: null,
+    employeeName: '',
+    date: '',
+    shiftName: '',
+    currentComment: ''
+  });
+
   // --- Generar rango de fechas dinámicamente ---
   const dateRange: Date[] = [];
   const startDate = new Date(rules.startDate + 'T00:00:00Z');
@@ -799,6 +817,35 @@ const EmployeeScheduleTable: React.FC = () => {
       console.error("Invalid date range:", rules.startDate, rules.endDate);
   }
 
+
+  // Función para guardar comentarios
+  const handleSaveComment = (comment: string) => {
+    if (commentModal.employeeIndex === null) return;
+    
+    const newEmployees = [...employees];
+    const employeeToUpdate = newEmployees[commentModal.employeeIndex];
+    
+    if (!employeeToUpdate.shiftComments) {
+      employeeToUpdate.shiftComments = {};
+    }
+    
+    // Usar directamente el dateString que ya viene en formato YYYY-MM-DD
+    const dateString = commentModal.date;
+    
+    if (comment.trim() === '') {
+      // Si el comentario está vacío, lo eliminamos
+      delete employeeToUpdate.shiftComments[dateString];
+    } else {
+      // Guardamos el comentario
+      employeeToUpdate.shiftComments[dateString] = comment;
+    }
+    
+    // Actualizamos la lista en el contexto
+    const currentList = getCurrentList();
+    if (currentList) {
+      updateList(currentList.id, { employees: newEmployees });
+    }
+  };
 
   // --- Renderizado del Componente ---
 
@@ -1126,10 +1173,48 @@ const EmployeeScheduleTable: React.FC = () => {
                                          title="Check This Box To Fix The Shift For The Chosen Day As An Employee Request, Ensuring It Can't Be Changed By Mistake Unless You Uncheck It."
                                      />
                                      
-                                     {/* Segundo botón: Comment Icon */}
-                                     <span className="comment-icon text-sm cursor-help" title="Any Comment Written Here Is Visible To Both The Supervisor And The Employee In The Work Schedule.">
-                                          📝
-                                     </span>
+                                     {/* Segundo botón: Comment Icon o texto del comentario */}
+                                     {employee.shiftComments?.[dateString] ? (
+                                         <span 
+                                             className="comment-text text-xs cursor-pointer hover:opacity-80 truncate max-w-[60px]" 
+                                             title={employee.shiftComments[dateString]}
+                                             onClick={() => {
+                                               const shiftForDate = assignedShift ? timeRanges.find(s => s.id === assignedShift) : null;
+                                               const shiftName = shiftForDate ? `${shiftForDate.startTime} - ${shiftForDate.endTime}` : 'No shift assigned';
+                                               
+                                               setCommentModal({
+                                                 isOpen: true,
+                                                 employeeIndex: index,
+                                                 employeeName: employee.name,
+                                                 date: dateString,
+                                                 shiftName: shiftName,
+                                                 currentComment: employee.shiftComments?.[dateString] || ''
+                                               });
+                                             }}
+                                         >
+                                             {employee.shiftComments[dateString]}
+                                         </span>
+                                     ) : (
+                                         <span 
+                                             className="comment-icon text-sm cursor-pointer hover:opacity-80" 
+                                             title="Any Comment Written Here Is Visible To Both The Supervisor And The Employee In The Work Schedule."
+                                             onClick={() => {
+                                               const shiftForDate = assignedShift ? timeRanges.find(s => s.id === assignedShift) : null;
+                                               const shiftName = shiftForDate ? `${shiftForDate.startTime} - ${shiftForDate.endTime}` : 'No shift assigned';
+                                               
+                                               setCommentModal({
+                                                 isOpen: true,
+                                                 employeeIndex: index,
+                                                 employeeName: employee.name,
+                                                 date: dateString,
+                                                 shiftName: shiftName,
+                                                 currentComment: employee.shiftComments?.[dateString] || ''
+                                               });
+                                             }}
+                                         >
+                                              📝
+                                         </span>
+                                     )}
                                      
                                      {/* Tercer botón: Swap Shift */}
                                      <button
@@ -1142,15 +1227,6 @@ const EmployeeScheduleTable: React.FC = () => {
                                      {/* Cuarto botón: espacio reservado para un futuro botón */}
                                      <span className="w-4"></span>
                                  </div>
-                                 
-                                 {/* Área para mostrar comentarios si existen */}
-                                 {employee.shiftComments?.[dateString] && (
-                                     <div className="w-full">
-                                         <span className="comment-text text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={employee.shiftComments[dateString]}>
-                                             {employee.shiftComments[dateString]}
-                                         </span>
-                                     </div>
-                                 )}
                               </div>
                            )}
                       </td>
@@ -1319,6 +1395,17 @@ const EmployeeScheduleTable: React.FC = () => {
          isOpen={overtimeModal.isOpen}
          onClose={() => setOvertimeModal({ isOpen: false, shift: null })}
          shift={overtimeModal.shift || { startTime: '', endTime: '' }}
+       />
+
+       {/* Comment Modal */}
+       <CommentModal
+         isOpen={commentModal.isOpen}
+         onClose={() => setCommentModal(prev => ({ ...prev, isOpen: false }))}
+         onSave={handleSaveComment}
+         currentComment={commentModal.currentComment}
+         employeeName={commentModal.employeeName}
+         date={commentModal.date}
+         shiftName={commentModal.shiftName}
        />
 
        {/* Modal para mostrar los empleados programados para una fecha específica */}
