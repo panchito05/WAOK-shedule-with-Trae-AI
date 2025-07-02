@@ -133,7 +133,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
           <button 
             onClick={handleGlobalOvertime}
             className={`w-full px-4 py-3 rounded transition-colors text-left flex items-center gap-2 ${
-              isGlobalOvertimeActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+              isGlobalOvertimeActive ? 'bg-red-500 hover:bg-red-600' : 'bg-[#19b08d] hover:bg-[#148a73]'
             } text-white`}
           >
             1. {isGlobalOvertimeActive ? 'Remove' : 'Add'} Overtime for the entire work schedule in all shifts where employees are missing to complete the Ideal Staff For This Shift.
@@ -144,7 +144,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
             className={`w-full px-4 py-3 rounded transition-colors text-left flex items-center gap-2 ${
               typeof shift.index === 'number' && shifts[shift.index]?.isOvertimeActive
                 ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-green-500 hover:bg-green-600'
+                : 'bg-[#19b08d] hover:bg-[#148a73]'
             } text-white`}
           >
             2. Add all missing overtime, but only for this specific shift
@@ -155,7 +155,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
 
           <button 
             onClick={() => setShowDateOvertime(true)}
-            className="w-full bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors text-left"
+            className="w-full bg-[#19b08d] text-white px-4 py-3 rounded hover:bg-[#148a73] transition-colors text-left"
           >
             3. Add or Edit Overtime for this shift on a specific day.
           </button>
@@ -186,7 +186,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                     <button
                       onClick={confirmGlobalOvertime}
                       className={`px-4 py-2 text-white rounded ${
-                        isGlobalOvertimeActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+                        isGlobalOvertimeActive ? 'bg-red-500 hover:bg-red-600' : 'bg-[#19b08d] hover:bg-[#148a73]'
                       }`}
                     >
                       {isGlobalOvertimeActive ? 'Disable' : 'Enable'} Global Overtime
@@ -225,7 +225,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                       className={`px-4 py-2 text-white rounded ${
                         typeof shift.index === 'number' && shifts[shift.index]?.isOvertimeActive
                           ? 'bg-red-500 hover:bg-red-600'
-                          : 'bg-green-500 hover:bg-green-600'
+                          : 'bg-[#19b08d] hover:bg-[#148a73]'
                       }`}
                     >
                       {typeof shift.index === 'number' && shifts[shift.index]?.isOvertimeActive
@@ -288,7 +288,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                     type="checkbox"
                     checked={isOvertimeActive}
                     onChange={(e) => setIsOvertimeActive(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    className="h-4 w-4 rounded border-gray-300 text-[#19b08d] focus:ring-[#19b08d]"
                   />
                   <label className="text-sm text-gray-700">
                     Enable overtime for this date
@@ -315,7 +315,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                       }
                     }}
                     disabled={!selectedDate}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-[#19b08d] text-white rounded hover:bg-[#148a73] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Save Overtime
                   </button>
@@ -328,7 +328,7 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-[400px] relative">
               <div className="flex items-start gap-4">
-                <Info className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
+                <Info className="h-6 w-6 text-[#19b08d] flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="text-xl font-bold mb-2">Success!</h3>
                   <p className="text-gray-600">
