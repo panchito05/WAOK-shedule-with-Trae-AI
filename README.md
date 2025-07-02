@@ -44,6 +44,20 @@ WAOK-Schedule es una aplicación web completa para la gestión de horarios, turn
 ## 🚀 Comandos de Ejecución
 
 ### 🚀 Inicio Rápido (Recomendado para Windows)
+
+#### Opción 1: Inicialización Automatizada (Recomendado)
+```bash
+# Inicialización completa con un solo comando
+init.bat
+
+# Para reinstalación forzada
+init.bat --force
+
+# Solo setup sin iniciar servidor
+init.bat --no-server
+```
+
+#### Opción 2: Comandos NPM
 ```bash
 # Instalación completa y inicio del servidor
 npm run quick-start
@@ -176,6 +190,9 @@ npm run quick-check
 # Ejecutar diagnóstico completo (tests + linting + health-check)
 npm run diagnose
 
+# Diagnóstico con auto-reparación
+node scripts/diagnose.js --fix
+
 # Auto-test completo (coverage + lint + check)
 npm run auto-test
 
@@ -249,6 +266,25 @@ WAOK-Schedule/
 ```
 
 ## 🔧 Solución de Problemas
+
+### 🎯 Scripts de Auto-Reparación
+
+El proyecto incluye scripts inteligentes que detectan y reparan automáticamente problemas comunes:
+
+**Verificaciones Automáticas:**
+- Node.js y npm disponibles
+- Dependencias críticas instaladas
+- Variables de entorno configuradas
+- Estructura del proyecto válida
+- Permisos de archivos correctos
+- Cachés limpios
+
+**Reparaciones Automáticas:**
+- Limpieza de cachés corruptos (`.vite`, `.next`, `coverage`)
+- Reinstalación de dependencias críticas
+- Creación automática de `.env.local`
+- Respaldo de configuraciones importantes
+- Instalación con múltiples estrategias de fallback
 
 ### ⚠️ Problema Crítico: Error "require is not defined in ES module scope"
 
@@ -443,6 +479,18 @@ npm run build
 
 # Iniciar en producción
 npm start
+```
+
+### 🐳 Despliegue con Docker (Opcional)
+```bash
+# Iniciar con base de datos incluida
+docker-compose up
+
+# Solo la aplicación
+docker-compose up app
+
+# Con base de datos y pgAdmin
+docker-compose up app db pgadmin
 ```
 
 ## 📈 Monitoreo y Diagnóstico

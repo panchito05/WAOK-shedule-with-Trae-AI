@@ -308,13 +308,23 @@ function formatBiweeklyHours(hoursData: number[], minBiweeklyHours: number): str
     return hoursData.map((hours, index) => {
         let backgroundColor = 'transparent';
         let textColor = 'black';
-        if (hours < minBiweeklyHours) {
+        
+        // Si las horas son exactamente iguales al mínimo o ambos son 0
+        if (hours === minBiweeklyHours || (hours === 0 && minBiweeklyHours === 0)) {
+            backgroundColor = 'transparent';
+            textColor = 'black';
+        }
+        // Si las horas son menores al mínimo (no cumple)
+        else if (hours < minBiweeklyHours) {
             backgroundColor = 'yellow';
             textColor = 'black';
-        } else if (hours > minBiweeklyHours) {
+        }
+        // Si las horas son mayores al mínimo (excede)
+        else if (hours > minBiweeklyHours) {
             backgroundColor = 'red';
             textColor = 'white';
         }
+        
         return `<div style="background-color: ${backgroundColor}; color: ${textColor}; padding: 2px; margin-bottom: 2px;">Biweekly ${index + 1}: ${hours.toFixed(2)} hours</div>`;
     }).join('');
 }
@@ -926,7 +936,7 @@ const EmployeeScheduleTable: React.FC = () => {
             {employees.map((employee, index) => {
               const matchPercentage = calculatePreferenceMatchPercentage(employee, timeRanges, rules.startDate, rules.endDate);
               const hoursData = calculateEmployeeHours(employee, rules.startDate, rules.endDate, timeRanges);
-              const minBiweeklyHours = parseInt(rules.minBiweeklyHours) || 0;
+              const minBiweeklyHours = parseInt(rules.minHoursPerTwoWeeks) || 0;
               const freeWeekends = countFreeWeekends(employee, rules.startDate, rules.endDate, timeRanges);
               const requiredWeekendsForPeriod = Math.ceil((parseInt(rules.weekendsOffPerMonth) || 0) * (dateRange.length / 28)); // Simple approx
 
