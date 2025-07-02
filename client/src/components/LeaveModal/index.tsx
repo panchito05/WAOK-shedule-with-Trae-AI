@@ -65,6 +65,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
     }
   };
 
+  const formatShortDate = (date: string) => {
+    try {
+      return format(parseISO(date), 'd-MMM-yyyy');
+    } catch {
+      return date;
+    }
+  };
+
   const handleSave = () => {
     if (!startDate || !endDate || !leaveType || !hoursPerDay) {
       return;
@@ -122,21 +130,39 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
 
         <div className="space-y-4">
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              From
+            </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
+                [&::-webkit-calendar-picker-indicator]:opacity-0 
+                [&::-webkit-calendar-picker-indicator]:absolute 
+                [&::-webkit-calendar-picker-indicator]:inset-0 
+                [&::-webkit-calendar-picker-indicator]:w-full 
+                [&::-webkit-calendar-picker-indicator]:h-full 
+                [&::-webkit-calendar-picker-indicator]:cursor-pointer"
               placeholder="mm/dd/yyyy"
             />
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              To
+            </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
+                [&::-webkit-calendar-picker-indicator]:opacity-0 
+                [&::-webkit-calendar-picker-indicator]:absolute 
+                [&::-webkit-calendar-picker-indicator]:inset-0 
+                [&::-webkit-calendar-picker-indicator]:w-full 
+                [&::-webkit-calendar-picker-indicator]:h-full 
+                [&::-webkit-calendar-picker-indicator]:cursor-pointer"
               placeholder="mm/dd/yyyy"
             />
           </div>
@@ -185,38 +211,56 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
         {existingLeaves.length > 0 && (
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Saved Leaves</h3>
-            <ul className="space-y-2 max-h-40 overflow-y-auto">
-              {existingLeaves.map((leave) => (
-                <li
-                  key={leave.id}
-                  className="flex justify-between items-center text-sm border rounded p-3 bg-gray-50"
-                >
-                  <span className="font-medium">
-                    {formatRange(leave.startDate, leave.endDate)} - {leave.leaveType} ({leave.hoursPerDay} hrs/day)
-                  </span>
-                  <span className="space-x-4">
-                    <button
-                      onClick={() => {
-                        setStartDate(leave.startDate);
-                        setEndDate(leave.endDate);
-                        setLeaveType(leave.leaveType);
-                        setHoursPerDay(String(leave.hoursPerDay));
-                        setEditingId(leave.id);
-                      }}
-                      className="text-blue-600 hover:underline"
+            <div className="max-h-40 overflow-y-auto border rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 sticky top-0">
+                  <tr className="border-b">
+                    <th className="px-3 py-2 text-left font-medium">From</th>
+                    <th className="px-3 py-2 text-left font-medium">To</th>
+                    <th className="px-3 py-2 text-left font-medium">Leave Type</th>
+                    <th className="px-2 py-2 text-center font-medium">Edit</th>
+                    <th className="px-2 py-2 text-center font-medium">Remove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {existingLeaves.map((leave) => (
+                    <tr
+                      key={leave.id}
+                      className="border-b hover:bg-gray-50"
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(leave.id)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
+                      <td className="px-3 py-2">{formatShortDate(leave.startDate)}</td>
+                      <td className="px-3 py-2">{formatShortDate(leave.endDate)}</td>
+                      <td className="px-3 py-2">
+                        {leave.leaveType}
+                        <span className="text-gray-500 ml-1">({leave.hoursPerDay} hrs/day)</span>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <button
+                          onClick={() => {
+                            setStartDate(leave.startDate);
+                            setEndDate(leave.endDate);
+                            setLeaveType(leave.leaveType);
+                            setHoursPerDay(String(leave.hoursPerDay));
+                            setEditingId(leave.id);
+                          }}
+                          className="px-3 py-1 text-xs bg-blue-500 text-white rounded border border-blue-600 hover:bg-blue-600 transition-colors shadow-sm"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <button
+                          onClick={() => onDelete(leave.id)}
+                          className="px-3 py-1 text-xs bg-red-500 text-white rounded border border-red-600 hover:bg-red-600 transition-colors shadow-sm"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
