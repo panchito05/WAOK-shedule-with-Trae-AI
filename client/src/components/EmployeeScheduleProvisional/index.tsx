@@ -7,6 +7,7 @@ import { usePersonnelData } from '../../context/PersonnelDataContext';
 import { useSelectedEmployees } from '../../context/SelectedEmployeesContext';
 import OvertimeModal from '../OvertimeModal';
 import { CommentModal } from '../CommentModal';
+import SwapShiftModal, { SwapAction } from '../SwapShiftModal';
 import { ShiftRow, Employee as CommonEmployee, Rules as CommonRules, ShiftOvertime } from '../../types/common';
 
 // Estructura específica de Shift para este componente (reemplaza la extensión por una combinación)
@@ -828,6 +829,19 @@ const EmployeeScheduleTable: React.FC = () => {
     currentComment: ''
   });
 
+  // Estado para el modal de intercambio de turnos
+  const [swapModal, setSwapModal] = useState<{
+    isOpen: boolean;
+    employee: Employee | null;
+    date: string;
+    shift: string | null;
+  }>({
+    isOpen: false,
+    employee: null,
+    date: '',
+    shift: null
+  });
+
   // --- Generar rango de fechas dinámicamente ---
   const dateRange: Date[] = [];
   const startDate = new Date(rules.startDate + 'T00:00:00Z');
@@ -1416,6 +1430,15 @@ const EmployeeScheduleTable: React.FC = () => {
                                      <button
                                          className="change-shift-btn text-sm focus:outline-none"
                                          title="Swapping Shifts Between Employees"
+                                         onClick={() => {
+                                           const currentShift = getCurrentShift(employee, dateString, timeRanges);
+                                           setSwapModal({
+                                             isOpen: true,
+                                             employee: employee,
+                                             date: dateString,
+                                             shift: currentShift
+                                           });
+                                         }}
                                      >
                                          🔄
                                      </button>
@@ -1602,6 +1625,88 @@ const EmployeeScheduleTable: React.FC = () => {
          employeeName={commentModal.employeeName}
          date={commentModal.date}
          shiftName={commentModal.shiftName}
+       />
+
+       {/* Swap Shift Modal */}
+       <SwapShiftModal
+         isOpen={swapModal.isOpen}
+         onClose={() => setSwapModal({ isOpen: false, employee: null, date: '', shift: null })}
+         employee1={swapModal.employee!}
+         clickedDate={swapModal.date}
+         currentShift={swapModal.shift}
+         employees={employees}
+         shifts={timeRanges as any}
+         rules={rules}
+         onConfirmSwap={(swaps) => {
+           // Apply swaps to employees
+           const updatedEmployees = [...employees];
+           const currentList = getCurrentList();
+           
+           swaps.forEach(swap => {
+             const emp1Index = updatedEmployees.findIndex(e => e.id === swap.employee1Id);
+             const emp2Index = updatedEmployees.findIndex(e => e.id === swap.employee2Id);
+             
+             if (emp1Index !== -1 && emp2Index !== -1) {
+               const emp1 = updatedEmployees[emp1Index];
+               const emp2 = updatedEmployees[emp2Index];
+               
+               // Initialize manualShifts if not present
+               if (!emp1.manualShifts) emp1.manualShifts = {};
+               if (!emp2.manualShifts) emp2.manualShifts = {};
+               
+               // Initialize shiftComments if not present
+               if (!emp1.shiftComments) emp1.shiftComments = {};
+               if (!emp2.shiftComments) emp2.shiftComments = {};
+               
+               // Apply the swap
+               emp1.manualShifts[swap.date1] = swap.shift2 || 'day-off';
+               emp2.manualShifts[swap.date2] = swap.shift1 || 'day-off';
+               
+               // Add comments
+               emp1.shiftComments[swap.date1] = `Cambio solicitado con ${swap.employee2Name}`;
+               emp2.shiftComments[swap.date2] = `Cambio aceptado con ${swap.employee1Name}`;
+             }
+           });
+           
+           // Update the list in context
+           if (currentList) {
+             // Get all employees from the current list
+             const allEmployees = currentList.employees || [];
+             
+             // Update only the employees that were modified
+             updatedEmployees.forEach(updatedEmp => {
+               const index = allEmployees.findIndex(emp => emp.id === updatedEmp.id);
+               if (index !== -1) {
+                 allEmployees[index] = updatedEmp;
+               }
+             });
+             
+             // Update the list with all employees
+             updateList(currentList.id, { employees: allEmployees });
+             
+             // Save swap history to localStorage
+             const swapHistory = {
+               id: `swap-${Date.now()}`,
+               listId: currentList.id,
+               swaps: swaps,
+               createdAt: new Date(),
+               createdBy: 'current-user' // TODO: Get from auth context
+             };
+             
+             const existingHistory = localStorage.getItem(`swapHistory_${currentList.id}`);
+             const history = existingHistory ? JSON.parse(existingHistory) : [];
+             history.unshift(swapHistory); // Add to beginning
+             
+             // Keep only last 50 swaps
+             if (history.length > 50) {
+               history.splice(50);
+             }
+             
+             localStorage.setItem(`swapHistory_${currentList.id}`, JSON.stringify(history));
+           }
+           
+           setSwapModal({ isOpen: false, employee: null, date: '', shift: null });
+         }}
        />
 
        {/* Modal para mostrar los empleados programados para una fecha específica */}
