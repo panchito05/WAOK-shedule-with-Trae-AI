@@ -787,6 +787,30 @@ const EmployeeScheduleTable: React.FC = () => {
     shift: null
   });
 
+  const [highlightedCell, setHighlightedCell] = useState<{ employeeId: string; dateString: string } | null>(null);
+  const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
+
+  // Estados para el sistema de resaltado con clic y doble clic
+  const [highlightedCells, setHighlightedCells] = useState<Set<string>>(() => {
+    const currentList = getCurrentList();
+    if (!currentList) return new Set();
+    const saved = localStorage.getItem(`highlightedCells_${currentList.id}`);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [highlightedRows, setHighlightedRows] = useState<Set<number>>(() => {
+    const currentList = getCurrentList();
+    if (!currentList) return new Set();
+    const saved = localStorage.getItem(`highlightedRows_${currentList.id}`);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [highlightedColumns, setHighlightedColumns] = useState<Set<string>>(() => {
+    const currentList = getCurrentList();
+    if (!currentList) return new Set();
+    const saved = localStorage.getItem(`highlightedColumns_${currentList.id}`);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [clickTimer, setClickTimer] = useState<NodeJS.Timeout | null>(null);
+
   // Estado para el modal de comentarios
   const [commentModal, setCommentModal] = useState<{
     isOpen: boolean;
@@ -847,6 +871,161 @@ const EmployeeScheduleTable: React.FC = () => {
     }
   };
 
+  // --- Funciones de manejo de clics para resaltado ---
+  
+  // Función para generar una clave única para cada celda
+  const getCellKey = (employeeIndex: number, dateString: string) => `${employeeIndex}-${dateString}`;
+
+  // Función para manejar clic simple en celda
+  const handleCellClick = (employeeIndex: number, dateString: string, event: React.MouseEvent) => {
+    // Verificar si el clic es en un elemento interactivo
+    const target = event.target as HTMLElement;
+    const interactiveElements = ['SELECT', 'INPUT', 'BUTTON', 'TEXTAREA'];
+    if (interactiveElements.includes(target.tagName) || 
+        target.closest('select, input, button, textarea, .comment-text')) {
+      return;
+    }
+
+    // Cancelar cualquier temporizador existente
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      setClickTimer(null);
+    }
+
+    // Configurar temporizador para clic simple
+    const timer = setTimeout(() => {
+      const cellKey = getCellKey(employeeIndex, dateString);
+      
+      // Verificar el estado actual de resaltado
+      if (highlightedRows.has(employeeIndex)) {
+        // Si la fila está resaltada, quitar todo resaltado
+        setHighlightedRows(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(employeeIndex);
+          return newSet;
+        });
+        setHighlightedCells(prev => {
+          const newSet = new Set(prev);
+          // Quitar todas las celdas de esta fila
+          for (const key of newSet) {
+            if (key.startsWith(`${employeeIndex}-`)) {
+              newSet.delete(key);
+            }
+          }
+          return newSet;
+        });
+      } else if (highlightedCells.has(cellKey)) {
+        // Si solo la celda está resaltada, expandir a toda la fila
+        setHighlightedRows(prev => new Set(prev).add(employeeIndex));
+        setHighlightedCells(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(cellKey);
+          return newSet;
+        });
+      } else {
+        // Si nada está resaltado, resaltar solo la celda
+        setHighlightedCells(prev => new Set(prev).add(cellKey));
+      }
+      
+      setClickTimer(null);
+    }, 250);
+
+    setClickTimer(timer);
+  };
+
+  // Función para manejar doble clic en celda
+  const handleCellDoubleClick = (employeeIndex: number, dateString: string, event: React.MouseEvent) => {
+    // Verificar si el clic es en un elemento interactivo
+    const target = event.target as HTMLElement;
+    const interactiveElements = ['SELECT', 'INPUT', 'BUTTON', 'TEXTAREA'];
+    if (interactiveElements.includes(target.tagName) || 
+        target.closest('select, input, button, textarea, .comment-text')) {
+      return;
+    }
+
+    // Cancelar el temporizador de clic simple
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      setClickTimer(null);
+    }
+
+    // Toggle del resaltado de columna
+    setHighlightedColumns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dateString)) {
+        newSet.delete(dateString);
+      } else {
+        newSet.add(dateString);
+      }
+      return newSet;
+    });
+
+    // Prevenir la propagación del evento
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  // Función para determinar si una celda debe estar resaltada
+  const shouldHighlightCell = (employeeIndex: number, dateString: string): boolean => {
+    const cellKey = getCellKey(employeeIndex, dateString);
+    return highlightedCells.has(cellKey) || 
+           highlightedRows.has(employeeIndex) || 
+           highlightedColumns.has(dateString);
+  };
+
+  // Función para obtener la clase de resaltado
+  const getHighlightClass = (employeeIndex: number, dateString: string): string => {
+    if (shouldHighlightCell(employeeIndex, dateString)) {
+      return '';  // Usaremos inline style en lugar de clase
+    }
+    return '';
+  };
+
+  // Limpiar temporizador al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+      }
+    };
+  }, [clickTimer]);
+
+  // Guardar estados de resaltado en localStorage
+  useEffect(() => {
+    const currentList = getCurrentList();
+    if (currentList) {
+      localStorage.setItem(`highlightedCells_${currentList.id}`, JSON.stringify(Array.from(highlightedCells)));
+    }
+  }, [highlightedCells, getCurrentList]);
+
+  useEffect(() => {
+    const currentList = getCurrentList();
+    if (currentList) {
+      localStorage.setItem(`highlightedRows_${currentList.id}`, JSON.stringify(Array.from(highlightedRows)));
+    }
+  }, [highlightedRows, getCurrentList]);
+
+  useEffect(() => {
+    const currentList = getCurrentList();
+    if (currentList) {
+      localStorage.setItem(`highlightedColumns_${currentList.id}`, JSON.stringify(Array.from(highlightedColumns)));
+    }
+  }, [highlightedColumns, getCurrentList]);
+
+  // Función para limpiar todos los resaltados
+  const clearAllHighlights = () => {
+    setHighlightedCells(new Set());
+    setHighlightedRows(new Set());
+    setHighlightedColumns(new Set());
+    
+    const currentList = getCurrentList();
+    if (currentList) {
+      localStorage.removeItem(`highlightedCells_${currentList.id}`);
+      localStorage.removeItem(`highlightedRows_${currentList.id}`);
+      localStorage.removeItem(`highlightedColumns_${currentList.id}`);
+    }
+  };
+
   // --- Renderizado del Componente ---
 
   return (
@@ -867,6 +1046,15 @@ const EmployeeScheduleTable: React.FC = () => {
              data-es-show="Mostrar Tabla Horario Empleados" data-es-hide="Ocultar Tabla Horario Empleados"
           >
              {isScheduleTableHidden ? 'Show Employee Schedule Table' : 'Hide Employee Schedule Table'} {/* Default text */}
+          </button>
+
+          {/* Clear highlights button */}
+          <button 
+            className="bg-white text-[#19b08d] px-4 py-2 rounded hover:bg-gray-100 transition-colors"
+            onClick={clearAllHighlights}
+            title="Clear all highlighted cells, rows and columns"
+          >
+            Clear Highlights
           </button>
 
           {/* AI and Print buttons (text and functionality are placeholders) */}
@@ -945,7 +1133,11 @@ const EmployeeScheduleTable: React.FC = () => {
                                 className={`px-2 py-1 text-center border border-gray-300 relative`}
                                 style={{ 
                                      width: `${columnWidths.dates}px`,
-                                     backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
+                                     backgroundColor: highlightedColumns.has(dateString) 
+                                       ? 'yellow' 
+                                       : date.getUTCDay() === dateRange[0].getUTCDay() 
+                                         ? 'rgba(25, 176, 141, 0.5)' 
+                                         : undefined
                                  }}
                             >
                                 {/* Using dangerouslySetInnerHTML to render formatted date HTML */}
@@ -1060,13 +1252,19 @@ const EmployeeScheduleTable: React.FC = () => {
                     return (
                       <td
                          key={dateString}
-                         className={`px-1 py-1 border border-gray-300 ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} // Highlight if rules violated (placeholder)
+                         className={`px-1 py-1 border border-gray-300 cursor-pointer ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} ${getHighlightClass(index, dateString)}
                          `}
                          style={{ 
                               position: 'relative', 
                               width: `${columnWidths.dates}px`,
-                              backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
-                          }} // Needed for absolute positioning of swap button
+                              backgroundColor: shouldHighlightCell(index, dateString) 
+                                ? 'yellow' 
+                                : date.getUTCDay() === dateRange[0].getUTCDay() 
+                                  ? 'rgba(25, 176, 141, 0.5)' 
+                                  : undefined
+                          }}
+                         onClick={(e) => handleCellClick(index, dateString, e)}
+                         onDoubleClick={(e) => handleCellDoubleClick(index, dateString, e)}
                       >
                            {isOnLeave ? (
                                // Render leave info if on leave
@@ -1081,9 +1279,7 @@ const EmployeeScheduleTable: React.FC = () => {
                                  {/* Shift Select */}
                                  <div className="flex items-center w-full">
                                    <select
-                                     className={`w-full border border-gray-300 rounded px-1 py-0.5 text-sm mb-1 focus:outline-none
-                                        ${assignedShift === 'day-off' ? 'bg-yellow-200' : ''}
-                                     `}
+                                     className="w-full border border-gray-300 rounded px-1 py-0.5 text-sm mb-1 focus:outline-none"
                                      value={assignedShift || ''} // Use assignedShift as the value
                                      disabled={!!fixedShift || !!isLocked || !!isAutoDayOff} // Disabled if fixed, locked, or auto day off
                                      onChange={(e) => {
