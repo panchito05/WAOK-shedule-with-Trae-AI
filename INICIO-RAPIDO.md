@@ -1,10 +1,25 @@
-# 🚀 WAOK-Schedule - Inicio Rápido
+# 🚀 WAOK-Schedule - Guía de Inicio Rápido
 
-## ⚡ INICIALIZACIÓN DEFINITIVA (Método más rápido)
+## ⚡ Inicialización en 2 Comandos (Recomendado)
 
-### 🚀 UN SOLO COMANDO - SOLUCIONA TODO:
+### Para Windows
 ```bash
-# NUEVO: Script de inicialización ultra-rápida (Windows)
+# 1. Instalar dependencias
+npm install
+
+# 2. Iniciar servidor
+npm run dev:win
+```
+
+**¡Listo!** Accede a: http://localhost:5000
+
+---
+
+## 🎯 Métodos de Inicialización
+
+### Opción 1: UN SOLO COMANDO - SOLUCIONA TODO
+```bash
+# Script de inicialización ultra-rápida (Windows)
 init.bat
 
 # Con opciones:
@@ -13,97 +28,80 @@ init.bat --no-server    # Solo setup, sin servidor
 init.bat --help         # Ver todas las opciones
 ```
 
-## ⚡ Inicialización Automática Avanzada
+### Opción 2: Comandos NPM
 
-### Setup Automatizado con Diagnóstico:
-```bash
-# Setup inteligente con auto-reparación
-npm run super-setup
+| Comando | Descripción | Uso Recomendado |
+|---------|-------------|----------------|
+| `npm run quick-start` | Instalación + servidor | **Primer uso** |
+| `npm run dev:win` | Solo servidor (Windows) | **Desarrollo diario** |
+| `npm run dev` | Servidor multiplataforma | **Linux/Mac** |
+| `npm run init:safe` | Inicialización segura | **Si hay problemas** |
+| `npm run super-setup` | Setup inteligente con auto-reparación | **Problemas complejos** |
 
-# Setup forzado para problemas severos
-npm run super-setup:force
+---
 
-# Setup rápido sin iniciar servidor
-npm run init:fast
+## ⚠️ Problemas Comunes SOLUCIONADOS
 
-# Setup completo con servidor automático
-npm run init:complete
-```
+### ✅ Error "require is not defined"
+**SOLUCIONADO PERMANENTEMENTE**
+- Archivos convertidos a ES Modules
+- No requiere acción manual
 
-### Windows (Método Tradicional):
-```bash
-# Ejecutar el script de setup automático
-./setup.bat
+### ✅ Fallos de npm ci
+**SOLUCIÓN**: Usar `npm install` en lugar de `npm ci`
+- Scripts actualizados para evitar este problema
 
-# Después ejecutar:
-npm run start:fast
-```
-
-### Cualquier Sistema:
-```bash
-# Comando único para todo
-npm run start:local
-```
-
-## 🎯 Comandos Principales
-
-| Comando | Descripción |
-|---------|-------------|
-| `npm run start:fast` | Inicia el servidor inmediatamente |
-| `npm run dev:win` | Desarrollo en Windows |
-| `npm run setup` | Instala todas las dependencias |
-| `npm run clean` | Limpia caches problemáticos |
-| `npm run reset` | Reset completo del proyecto |
-
-## 🔧 Solución de Problemas Comunes
-
-### ❌ Error de permisos en Windows
+### ✅ Problemas de permisos en Windows
 ```bash
 npm run clean
 npm run start:fast
 ```
 
-### ❌ Dependencias faltantes
+### ✅ Puerto 5000 ocupado
 ```bash
-npm run setup
+# Ver qué usa el puerto
+netstat -ano | findstr :5000
+
+# Detener proceso si es necesario
+taskkill /F /PID <ID_DEL_PROCESO>
+
+# O cambiar puerto en .env.local
+PORT=5001
 ```
 
-### ❌ Variables de entorno
-- El archivo `.env.local` se crea automáticamente
-- Para base de datos real, editar `DATABASE_URL` en `.env.local`
+---
 
-### ❌ Puerto ocupado
-- Cambiar `PORT=5001` en `.env.local`
-- O usar: `npx cross-env PORT=5001 tsx server/index.ts`
+## 📋 Verificación Post-Inicialización
 
-## 🌐 URLs de Acceso
-
-- **Aplicación**: http://localhost:5000
-- **API**: http://localhost:5000/api
-- **Health Check**: http://localhost:5000/health
-
-## 📝 Desarrollo
-
-### Testing Rápido
 ```bash
-npm run test:quick       # Tests básicos
-npm run test:coverage    # Con cobertura
-npm run check:quick      # Linting rápido
+# Verificar que todo funciona
+npm run quick-check
+
+# Diagnóstico completo (opcional)
+npm run diagnose
+
+# Diagnóstico con auto-reparación
+node scripts/diagnose.js --fix
 ```
 
-### Base de Datos
-```bash
-# Solo si tienes DATABASE_URL real
-npm run db:setup
-```
+---
 
-## 🆘 En Caso de Problemas Severos
+## 🆘 Si Algo Falla
 
+### Método 1: Reset Rápido
 ```bash
-# Reset completo
+# Detener procesos
+Get-Process node,npm,tsx | Stop-Process -Force
+
+# Limpiar y reinstalar
 npm run reset
+npm install
+npm run dev:win
+```
 
-# O manualmente:
+### Método 2: Reset Manual
+```bash
+# Limpiar manualmente
 rmdir /s /q node_modules
 rmdir /s /q .vite
 npm install --force
@@ -111,5 +109,62 @@ npm run start:fast
 ```
 
 ---
+
+## 🌐 URLs de Acceso
+
+- **Aplicación**: http://localhost:5000
+- **API**: http://localhost:5000/api
+- **Health Check**: http://localhost:5000/health
+
+---
+
+## 📝 Desarrollo
+
+### Testing Rápido
+```bash
+npm run test:quick       # Tests básicos
+npm run test:coverage    # Con cobertura
+npm run lint:fix         # Corregir linting
+```
+
+### Base de Datos
+```bash
+# Solo si tienes DATABASE_URL real configurada
+npm run db:setup
+npm run db:push
+```
+
+---
+
+## 📋 Configuración Requerida
+
+1. **Node.js**: Versión 18+ requerida
+2. **Variables de entorno**: El archivo `.env.local` se crea automáticamente
+3. **Base de datos**: Para usar base de datos real, editar `DATABASE_URL` en `.env.local`
+
+---
+
+## ✨ Funcionalidades Verificadas
+
+- ✅ Servidor Express en puerto 5000
+- ✅ Frontend React con Vite
+- ✅ Hot reload automático
+- ✅ TypeScript configurado
+- ✅ Tailwind CSS funcionando
+- ✅ Base de datos conectada
+- ✅ Testing suite disponible
+- ✅ ESLint configurado
+
+---
+
+**🎯 COMANDO RECOMENDADO PARA NUEVOS USUARIOS:**
+```bash
+npm run quick-start
+```
+
+**🎯 COMANDO RECOMENDADO PARA USO DIARIO:**
+```bash
+npm run dev:win
+```
 
 **✅ Después del setup, el servidor debería estar corriendo en http://localhost:5000**
