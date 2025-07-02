@@ -44,7 +44,8 @@ export interface Employee {
     startDate: string; 
     endDate: string; 
     leaveType: string; 
-    hoursPerDay: number 
+    hoursPerDay: number;
+    isArchived?: boolean;
   }[];
   fixedShifts?: { [day: string]: string[] };
   manualShifts?: { [date: string]: string[] };

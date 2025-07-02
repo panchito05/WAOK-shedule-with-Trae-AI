@@ -8,6 +8,7 @@ interface Leave {
   endDate: string;
   leaveType: string;
   hoursPerDay: number;
+  isArchived?: boolean;
 }
 
 interface LeaveModalProps {
@@ -18,6 +19,7 @@ interface LeaveModalProps {
   onSave: (leave: { startDate: string; endDate: string; type: string; hoursPerDay: number }) => void;
   onEdit: (leave: { id: string; startDate: string; endDate: string; type: string; hoursPerDay: number }) => void;
   onDelete: (id: string) => void;
+  onArchive: (id: string) => void;
 }
 
 const leaveTypes = [
@@ -47,7 +49,8 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
   existingLeaves,
   onSave,
   onEdit,
-  onDelete
+  onDelete,
+  onArchive
 }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -55,6 +58,7 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
   const [customLeaveType, setCustomLeaveType] = useState('');
   const [hoursPerDay, setHoursPerDay] = useState('8');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const formatRange = (start: string, end: string) => {
     try {
@@ -117,11 +121,11 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-12 z-50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg p-6 w-[480px] relative"
+        className="bg-white rounded-lg p-6 w-[600px] relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -234,8 +238,16 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
 
         {existingLeaves.length > 0 && (
           <div className="mt-6">
-            <h3 className="font-semibold mb-2">Saved Leaves</h3>
-            <div className="max-h-40 overflow-y-auto border rounded">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold">Saved Leaves</h3>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="px-3 py-1 text-xs bg-blue-500 text-white rounded border border-blue-600 hover:bg-blue-600 transition-colors shadow-sm"
+              >
+                {showArchived ? 'Active Leaves' : 'Show Archived'}
+              </button>
+            </div>
+            <div className="max-h-80 overflow-y-auto border rounded">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 sticky top-0">
                   <tr className="border-b">
@@ -243,11 +255,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
                     <th className="px-3 py-2 text-left font-medium">To</th>
                     <th className="px-3 py-2 text-left font-medium">Leave Type</th>
                     <th className="px-2 py-2 text-center font-medium">Edit</th>
+                    <th className="px-2 py-2 text-center font-medium">Archive</th>
                     <th className="px-2 py-2 text-center font-medium">Remove</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {existingLeaves.map((leave) => (
+                  {existingLeaves
+                    .filter(leave => showArchived ? leave.isArchived : !leave.isArchived)
+                    .map((leave) => (
                     <tr
                       key={leave.id}
                       className="border-b hover:bg-gray-50"
@@ -257,6 +272,9 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
                       <td className="px-3 py-2">
                         {leave.leaveType}
                         <span className="text-gray-500 ml-1">({leave.hoursPerDay} hrs/day)</span>
+                        {leave.isArchived && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">Archived</span>
+                        )}
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button
@@ -282,6 +300,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button
+                          onClick={() => onArchive(leave.id)}
+                          className="px-3 py-1 text-xs bg-[#19b08d] text-white rounded border border-[#19b08d] hover:bg-[#19b08d]/90 transition-colors shadow-sm"
+                        >
+                          {leave.isArchived ? 'Unarchive' : 'Archive'}
+                        </button>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <button
                           onClick={() => onDelete(leave.id)}
                           className="px-3 py-1 text-xs bg-red-500 text-white rounded border border-red-600 hover:bg-red-600 transition-colors shadow-sm"
                         >
@@ -290,6 +316,13 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
                       </td>
                     </tr>
                   ))}
+                  {existingLeaves.filter(leave => showArchived ? leave.isArchived : !leave.isArchived).length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-4 text-center text-gray-500">
+                        {showArchived ? 'No archived leaves found' : 'No active leaves found'}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

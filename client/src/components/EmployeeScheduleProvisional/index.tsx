@@ -816,6 +816,28 @@ const EmployeeScheduleTable: React.FC = () => {
       }
     }
   };
+
+  const handleArchiveLeave = (employeeIndex: number, leaveId: string) => {
+    const newEmployees = [...employees];
+    const employee = newEmployees[employeeIndex];
+    
+    if (employee.leave) {
+      employee.leave = employee.leave.map(l =>
+        l.id === leaveId ? { ...l, isArchived: !l.isArchived } : l
+      );
+    }
+    
+    // Actualizar el contexto
+    const currentList = getCurrentList();
+    if (currentList) {
+      const allEmployees = currentList.employees || [];
+      const globalEmployeeIndex = allEmployees.findIndex(emp => emp.id === employee.id);
+      if (globalEmployeeIndex !== -1) {
+        allEmployees[globalEmployeeIndex] = employee;
+        updateList(currentList.id, { employees: allEmployees });
+      }
+    }
+  };
   
   // Efecto para cerrar el modal al hacer clic fuera o presionar ESC
   React.useEffect(() => {
@@ -2315,6 +2337,7 @@ const EmployeeScheduleTable: React.FC = () => {
            onSave={(leave) => handleAddLeave(leaveModalState.employeeIndex!, leave)}
            onEdit={(leave) => handleEditLeave(leaveModalState.employeeIndex!, leave)}
            onDelete={(leaveId) => handleDeleteLeave(leaveModalState.employeeIndex!, leaveId)}
+           onArchive={(leaveId) => handleArchiveLeave(leaveModalState.employeeIndex!, leaveId)}
          />
        )}
 

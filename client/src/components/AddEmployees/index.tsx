@@ -523,6 +523,16 @@ const AddEmployees: React.FC = () => {
     }
   };
 
+  const handleArchiveLeave = (employeeIndex: number, leaveId: string) => {
+    if (currentEmployeeList) {
+      const employeeToUpdate = employees[employeeIndex];
+      const updatedLeave = (employeeToUpdate.leave || []).map(l =>
+        l.id === leaveId ? { ...l, isArchived: !l.isArchived } : l
+      );
+      updateEmployeeProperty(employeeIndex, 'leave', updatedLeave);
+    }
+  };
+
   const handleSaveFixedShifts = (fixedShifts: { [day: string]: string[] }) => {
     if (assignShiftsModalState.employeeIndex === null || !currentEmployeeList) return;
     // Deep copy here if needed for fixed shifts updates too
@@ -985,6 +995,11 @@ const AddEmployees: React.FC = () => {
             onDelete={(leaveId) => {
               if (leaveModalState.employeeIndex !== null) {
                 handleRemoveLeave(leaveModalState.employeeIndex, leaveId);
+              }
+            }}
+            onArchive={(leaveId) => {
+              if (leaveModalState.employeeIndex !== null) {
+                handleArchiveLeave(leaveModalState.employeeIndex, leaveId);
               }
             }}
         />
