@@ -21,7 +21,9 @@
       "Bash(cd:*)",
       "Bash(cd:*)",
       "Bash(cd:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

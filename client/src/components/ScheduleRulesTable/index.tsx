@@ -73,17 +73,33 @@ const formatFixedShifts = (fixedShifts: { [day: string]: string[] } | undefined,
     .join(', ');
 };
 
-const formatLeaves = (leaves: { startDate: string; endDate: string; leaveType: string; hoursPerDay: number }[] | undefined) => {
+const formatLeaves = (leaves: { id?: string; startDate: string; endDate: string; leaveType: string; hoursPerDay: number; isArchived?: boolean }[] | undefined) => {
   if (!leaves || leaves.length === 0) return 'No leaves';
-  return leaves
-    .map(leave => {
-      const startDate = parseDate(leave.startDate);
-      const endDate = parseDate(leave.endDate);
-      const formattedStart = isNaN(startDate.getTime()) ? leave.startDate : format(startDate, 'd/MMMM/yyyy');
-      const formattedEnd = isNaN(endDate.getTime()) ? leave.endDate : format(endDate, 'd/MMMM/yyyy');
-      return `${leave.leaveType}: ${formattedStart} to ${formattedEnd} (${leave.hoursPerDay} hrs/day)`;
-    })
-    .join(', ');
+  
+  // Filter out archived leaves
+  const activeLeaves = leaves.filter(leave => !leave.isArchived);
+  
+  if (activeLeaves.length === 0) return 'No leaves';
+  
+  return (
+    <div className="space-y-2">
+      {activeLeaves.map((leave, index) => {
+        const startDate = parseDate(leave.startDate);
+        const endDate = parseDate(leave.endDate);
+        const formattedStart = isNaN(startDate.getTime()) ? leave.startDate : format(startDate, 'd/MMMM/yyyy');
+        const formattedEnd = isNaN(endDate.getTime()) ? leave.endDate : format(endDate, 'd/MMMM/yyyy');
+        
+        return (
+          <div key={leave.id || index}>
+            <span className="text-[#19b08d] font-medium">{index + 1}: {leave.leaveType}:</span>
+            <span className="text-gray-700 ml-1">
+              {formattedStart} to {formattedEnd} ({leave.hoursPerDay} hrs/day)
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const formatBlockedShifts = (blockedShifts: { [shiftId: string]: { blockedDays: string[]; isActive: boolean } } | undefined, shifts: ShiftRow[]) => {
