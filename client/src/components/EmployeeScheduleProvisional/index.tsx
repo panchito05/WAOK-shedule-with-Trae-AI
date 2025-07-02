@@ -10,6 +10,8 @@ import { CommentModal } from '../CommentModal';
 import SwapShiftModal, { SwapAction } from '../SwapShiftModal';
 import LeaveModal from '../LeaveModal';
 import { ShiftRow, Employee as CommonEmployee, Rules as CommonRules, ShiftOvertime } from '../../types/common';
+import { EmployeeShiftTooltip } from '../EmployeeShiftTooltip';
+import { TooltipProvider } from '../ui/tooltip';
 
 // Estructura específica de Shift para este componente (reemplaza la extensión por una combinación)
 interface Shift {
@@ -1178,7 +1180,8 @@ const EmployeeScheduleTable: React.FC = () => {
   // --- Renderizado del Componente ---
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-6 mt-8 font-['Viata']">
+    <TooltipProvider>
+      <div className="w-full bg-white rounded-lg shadow-lg p-6 mt-8 font-['Viata']">
       <div className="bg-gradient-to-r from-[#19b08d] to-[#117cee] p-4 rounded-t-lg mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white" data-en="Employee Schedule" data-es="Horario Empleados">Employee Schedule Provisional</h2> {/* Added data-en/es */}
         <div className="space-x-2">
@@ -1327,6 +1330,12 @@ const EmployeeScheduleTable: React.FC = () => {
               const minBiweeklyHours = parseInt(rules.minHoursPerTwoWeeks) || 0;
               const freeWeekends = countFreeWeekends(employee, rules.startDate, rules.endDate, timeRanges);
               const requiredWeekendsForPeriod = Math.ceil((parseInt(rules.weekendsOffPerMonth) || 0) * (dateRange.length / 28)); // Simple approx
+              
+              // Prepare biweekly hours data for tooltip
+              const biweeklyHoursForTooltip = hoursData.map((hours, index) => ({
+                period: `Biweekly ${index + 1}`,
+                hours: hours
+              }));
 
 
               return (
@@ -1401,7 +1410,7 @@ const EmployeeScheduleTable: React.FC = () => {
                     return (
                       <td
                          key={dateString}
-                         className={`px-1 py-1 border border-gray-300 cursor-pointer ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} ${getHighlightClass(index, dateString)}
+                         className={`px-1 py-1 border border-gray-300 ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} ${getHighlightClass(index, dateString)}
                          `}
                          style={{ 
                               position: 'relative', 
@@ -1412,9 +1421,20 @@ const EmployeeScheduleTable: React.FC = () => {
                                   ? 'rgba(25, 176, 141, 0.5)' 
                                   : undefined
                           }}
-                         onClick={(e) => handleCellClick(index, dateString, e)}
-                         onDoubleClick={(e) => handleCellDoubleClick(index, dateString, e)}
                       >
+                        <EmployeeShiftTooltip
+                          employee={employee}
+                          shifts={timeRanges}
+                          biweeklyHours={biweeklyHoursForTooltip}
+                          weekendsOff={freeWeekends}
+                          minHoursPerTwoWeeks={minBiweeklyHours}
+                          minWeekendsOffPerMonth={parseInt(rules.weekendsOffPerMonth) || 0}
+                        >
+                          <div 
+                            className="w-full h-full cursor-pointer"
+                            onClick={(e) => handleCellClick(index, dateString, e)}
+                            onDoubleClick={(e) => handleCellDoubleClick(index, dateString, e)}
+                          >
                            {isOnLeave ? (
                                // Render leave info if on leave
                                <div 
@@ -1611,6 +1631,8 @@ const EmployeeScheduleTable: React.FC = () => {
                                  </div>
                               </div>
                            )}
+                          </div>
+                        </EmployeeShiftTooltip>
                       </td>
                     );
                   })}
@@ -2342,6 +2364,7 @@ const EmployeeScheduleTable: React.FC = () => {
        )}
 
     </div>
+    </TooltipProvider>
   );
 };
 
