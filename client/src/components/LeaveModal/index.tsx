@@ -52,6 +52,7 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [leaveType, setLeaveType] = useState('Paid Vacation');
+  const [customLeaveType, setCustomLeaveType] = useState('');
   const [hoursPerDay, setHoursPerDay] = useState('8');
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -74,7 +75,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
   };
 
   const handleSave = () => {
+    const isCustomType = leaveType === 'Other Type of Leave (Editable Write Your Leave)';
+    const finalLeaveType = isCustomType ? customLeaveType : leaveType;
+    
     if (!startDate || !endDate || !leaveType || !hoursPerDay) {
+      return;
+    }
+    
+    if (isCustomType && !customLeaveType.trim()) {
       return;
     }
 
@@ -83,14 +91,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
         id: editingId,
         startDate,
         endDate,
-        type: leaveType,
+        type: finalLeaveType,
         hoursPerDay: parseFloat(hoursPerDay)
       });
     } else {
       onSave({
         startDate,
         endDate,
-        type: leaveType,
+        type: finalLeaveType,
         hoursPerDay: parseFloat(hoursPerDay)
       });
     }
@@ -99,6 +107,7 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
     setStartDate('');
     setEndDate('');
     setLeaveType('Paid Vacation');
+    setCustomLeaveType('');
     setHoursPerDay('8');
     setEditingId(null);
     onClose();
@@ -184,6 +193,21 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
             </select>
           </div>
 
+          {leaveType === 'Other Type of Leave (Editable Write Your Leave)' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Custom Leave Type
+              </label>
+              <input
+                type="text"
+                value={customLeaveType}
+                onChange={(e) => setCustomLeaveType(e.target.value)}
+                className="w-full border border-gray-300 rounded px-3 py-2"
+                placeholder="e.g., Training Leave, Personal Development"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Hours per Leave Day (for biweekly calculation):
@@ -239,7 +263,15 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
                           onClick={() => {
                             setStartDate(leave.startDate);
                             setEndDate(leave.endDate);
-                            setLeaveType(leave.leaveType);
+                            // Check if this is a custom leave type
+                            const isCustomType = !leaveTypes.includes(leave.leaveType);
+                            if (isCustomType) {
+                              setLeaveType('Other Type of Leave (Editable Write Your Leave)');
+                              setCustomLeaveType(leave.leaveType);
+                            } else {
+                              setLeaveType(leave.leaveType);
+                              setCustomLeaveType('');
+                            }
                             setHoursPerDay(String(leave.hoursPerDay));
                             setEditingId(leave.id);
                           }}
