@@ -8,6 +8,7 @@ import { useSelectedEmployees } from '../../context/SelectedEmployeesContext';
 import OvertimeModal from '../OvertimeModal';
 import { CommentModal } from '../CommentModal';
 import SwapShiftModal, { SwapAction } from '../SwapShiftModal';
+import LeaveModal from '../LeaveModal';
 import { ShiftRow, Employee as CommonEmployee, Rules as CommonRules, ShiftOvertime } from '../../types/common';
 
 // Estructura específica de Shift para este componente (reemplaza la extensión por una combinación)
@@ -648,6 +649,17 @@ const EmployeeScheduleTable: React.FC = () => {
   const [currentDateForShiftModal, setCurrentDateForShiftModal] = useState<Date | null>(null);
   const staffModalRef = React.useRef<HTMLDivElement>(null);
   
+  // Estado para el modal de Leave
+  const [leaveModalState, setLeaveModalState] = useState<{
+    isOpen: boolean;
+    employeeIndex: number | null;
+    date: string;
+  }>({
+    isOpen: false,
+    employeeIndex: null,
+    date: ''
+  });
+  
   // Función para mostrar los empleados para una fecha específica
   const showEmployeesForDate = (date: Date) => {
     setCurrentModalDate(date);
@@ -705,6 +717,103 @@ const EmployeeScheduleTable: React.FC = () => {
       const nextDay = new Date(currentModalDate);
       nextDay.setUTCDate(nextDay.getUTCDate() + 1);
       setCurrentModalDate(nextDay);
+    }
+  };
+  
+  // Handlers para el Leave Modal
+  const handleAddLeave = (employeeIndex: number, leaveData: {
+    startDate: string;
+    endDate: string;
+    type: string;
+    hoursPerDay: number;
+  }) => {
+    const newEmployees = [...employees];
+    const employee = newEmployees[employeeIndex];
+    
+    // Crear nueva entrada de leave
+    const newLeave = {
+      id: crypto.randomUUID(),
+      startDate: leaveData.startDate,
+      endDate: leaveData.endDate,
+      leaveType: leaveData.type,
+      hoursPerDay: leaveData.hoursPerDay
+    };
+    
+    if (!employee.leave) {
+      employee.leave = [];
+    }
+    employee.leave.push(newLeave);
+    
+    // Actualizar el contexto
+    const currentList = getCurrentList();
+    if (currentList) {
+      // Get all employees from the current list
+      const allEmployees = currentList.employees || [];
+      
+      // Find and update the specific employee
+      const globalEmployeeIndex = allEmployees.findIndex(emp => emp.id === employee.id);
+      if (globalEmployeeIndex !== -1) {
+        allEmployees[globalEmployeeIndex] = employee;
+        updateList(currentList.id, { employees: allEmployees });
+      }
+    }
+    
+    // Cerrar el modal
+    setLeaveModalState({ isOpen: false, employeeIndex: null, date: '' });
+  };
+  
+  const handleEditLeave = (employeeIndex: number, leaveData: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    type: string;
+    hoursPerDay: number;
+  }) => {
+    const newEmployees = [...employees];
+    const employee = newEmployees[employeeIndex];
+    
+    if (employee.leave) {
+      const leaveIndex = employee.leave.findIndex(l => l.id === leaveData.id);
+      if (leaveIndex !== -1) {
+        employee.leave[leaveIndex] = {
+          ...employee.leave[leaveIndex],
+          startDate: leaveData.startDate,
+          endDate: leaveData.endDate,
+          leaveType: leaveData.type,
+          hoursPerDay: leaveData.hoursPerDay
+        };
+      }
+    }
+    
+    // Actualizar el contexto
+    const currentList = getCurrentList();
+    if (currentList) {
+      const allEmployees = currentList.employees || [];
+      const globalEmployeeIndex = allEmployees.findIndex(emp => emp.id === employee.id);
+      if (globalEmployeeIndex !== -1) {
+        allEmployees[globalEmployeeIndex] = employee;
+        updateList(currentList.id, { employees: allEmployees });
+      }
+    }
+  };
+  
+  const handleDeleteLeave = (employeeIndex: number, leaveId: string) => {
+    const newEmployees = [...employees];
+    const employee = newEmployees[employeeIndex];
+    
+    if (employee.leave) {
+      employee.leave = employee.leave.filter(l => l.id !== leaveId);
+    }
+    
+    // Actualizar el contexto
+    const currentList = getCurrentList();
+    if (currentList) {
+      const allEmployees = currentList.employees || [];
+      const globalEmployeeIndex = allEmployees.findIndex(emp => emp.id === employee.id);
+      if (globalEmployeeIndex !== -1) {
+        allEmployees[globalEmployeeIndex] = employee;
+        updateList(currentList.id, { employees: allEmployees });
+      }
     }
   };
   
@@ -1286,7 +1395,19 @@ const EmployeeScheduleTable: React.FC = () => {
                       >
                            {isOnLeave ? (
                                // Render leave info if on leave
-                               <div className="text-center text-sm" style={{ lineHeight: 1.2, padding: '4px', backgroundColor: '#19b08d', color: '#000' }}> {/* Color verde solicitado */}
+                               <div 
+                                 className="text-center text-sm cursor-pointer hover:opacity-80" 
+                                 style={{ lineHeight: 1.2, padding: '4px', backgroundColor: '#19b08d', color: '#000' }}
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   setLeaveModalState({
+                                     isOpen: true,
+                                     employeeIndex: index,
+                                     date: dateString
+                                   });
+                                 }}
+                                 title="Click to edit leave"
+                               >
                                     {employee.leave?.find(l => l.startDate <= dateString && l.endDate >= dateString)?.leaveType || 'Leave'}
                                      <br />
                                      <small style={{ fontSize: '0.85em', color: 'inherit' }}>({employee.leave?.find(l => l.startDate <= dateString && l.endDate >= dateString)?.hoursPerDay || 0} hrs/day)</small>
@@ -1305,6 +1426,18 @@ const EmployeeScheduleTable: React.FC = () => {
                                      value={assignedShift || ''} // Use assignedShift as the value
                                      disabled={!!fixedShift || !!isLocked || !!isAutoDayOff} // Disabled if fixed, locked, or auto day off
                                      onChange={(e) => {
+                                       // Check if "add-leave" was selected
+                                       if (e.target.value === 'add-leave') {
+                                         setLeaveModalState({
+                                           isOpen: true,
+                                           employeeIndex: index,
+                                           date: dateString
+                                         });
+                                         // Reset the select value to its original state
+                                         e.target.value = assignedShift || '';
+                                         return;
+                                       }
+
                                        const newEmployees = [...employees];
                                        const employeeToUpdate = newEmployees[index];
 
@@ -1348,7 +1481,7 @@ const EmployeeScheduleTable: React.FC = () => {
                                          </option>
                                      ))}
                                       {/* Add Leave option - Placeholder */}
-                                      <option value="add-leave" disabled>Add Leave</option>
+                                      <option value="add-leave">Add Leave</option>
                                       </select>
                                    {manualShift === undefined && fixedShift && !isAutoDayOff && (
                                      <span
@@ -2170,6 +2303,19 @@ const EmployeeScheduleTable: React.FC = () => {
              </div>
            </div>
          </div>
+       )}
+       
+       {/* Leave Modal */}
+       {leaveModalState.isOpen && leaveModalState.employeeIndex !== null && (
+         <LeaveModal
+           isOpen={leaveModalState.isOpen}
+           onClose={() => setLeaveModalState({ isOpen: false, employeeIndex: null, date: '' })}
+           employeeName={employees[leaveModalState.employeeIndex].name}
+           existingLeaves={employees[leaveModalState.employeeIndex].leave || []}
+           onSave={(leave) => handleAddLeave(leaveModalState.employeeIndex!, leave)}
+           onEdit={(leave) => handleEditLeave(leaveModalState.employeeIndex!, leave)}
+           onDelete={(leaveId) => handleDeleteLeave(leaveModalState.employeeIndex!, leaveId)}
+         />
        )}
 
     </div>
