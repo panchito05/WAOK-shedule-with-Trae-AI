@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Calendar as CalendarIcon, Users } from 'lucide-react'; // Renombrar para evitar conflicto
+import { Calendar as CalendarIcon, Users, Printer, ChevronDown } from 'lucide-react'; // Renombrar para evitar conflicto
 import { useRules } from '../../context/RulesContext';
 import { useEmployeeLists } from '../../context/EmployeeListsContext';
 import { useShiftContext } from '../../context/ShiftContext';
@@ -9,9 +9,17 @@ import OvertimeModal from '../OvertimeModal';
 import { CommentModal } from '../CommentModal';
 import SwapShiftModal, { SwapAction } from '../SwapShiftModal';
 import LeaveModal from '../LeaveModal';
+import { EmployeeCalendarModal } from '../EmployeeCalendarModal';
 import { ShiftRow, Employee as CommonEmployee, Rules as CommonRules, ShiftOvertime } from '../../types/common';
 import { EmployeeShiftTooltip } from '../EmployeeShiftTooltip';
 import { TooltipProvider } from '../ui/tooltip';
+import { printMultipleCalendars, PrintPeriod } from '../EmployeeCalendar/utils/printMultipleCalendars';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 // Estructura específica de Shift para este componente (reemplaza la extensión por una combinación)
 interface Shift {
@@ -979,6 +987,15 @@ const EmployeeScheduleTable: React.FC = () => {
     shift: null
   });
 
+  // Estado para el modal del calendario
+  const [calendarModal, setCalendarModal] = useState<{
+    isOpen: boolean;
+    employee: Employee | null;
+  }>({
+    isOpen: false,
+    employee: null
+  });
+
   // --- Generar rango de fechas dinámicamente ---
   const dateRange: Date[] = [];
   const startDate = new Date(rules.startDate + 'T00:00:00Z');
@@ -1209,13 +1226,43 @@ const EmployeeScheduleTable: React.FC = () => {
             Clear Highlights
           </button>
 
-          {/* AI and Print buttons (text and functionality are placeholders) */}
+          {/* AI button (placeholder) */}
           <button className="bg-white text-[#19b08d] px-4 py-2 rounded hover:bg-gray-100 transition-colors">
             Create Schedule with AI
           </button>
-          <button className="bg-white text-[#19b08d] px-4 py-2 rounded hover:bg-gray-100 transition-colors">
-            Print Schedule
-          </button>
+          
+          {/* Print Schedule dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="bg-white text-[#19b08d] px-4 py-2 rounded hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                Print Schedule
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => printMultipleCalendars(employees, shifts, rules.startDate, rules.endDate, 'day')}
+              >
+                Print Today
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => printMultipleCalendars(employees, shifts, rules.startDate, rules.endDate, 'week')}
+              >
+                Print This Week
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => printMultipleCalendars(employees, shifts, rules.startDate, rules.endDate, 'fortnight')}
+              >
+                Print Next 2 Weeks
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => printMultipleCalendars(employees, shifts, rules.startDate, rules.endDate, 'month')}
+              >
+                Print This Month
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1347,7 +1394,12 @@ const EmployeeScheduleTable: React.FC = () => {
                         <span className="text-sm text-gray-500">({matchPercentage}% match)
 </span> {/* Added match % */}
                     </div>
-                    <button className="mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm px-2 py-1 rounded" data-en="View in Calendar" data-es="Ver en Calendario"> {/* Added text-sm, translation */}
+                    <button 
+                      className="mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm px-2 py-1 rounded" 
+                      data-en="View in Calendar" 
+                      data-es="Ver en Calendario"
+                      onClick={() => setCalendarModal({ isOpen: true, employee })}
+                    >
                       View in Calendar
                     </button>
                   </td>
@@ -2360,6 +2412,23 @@ const EmployeeScheduleTable: React.FC = () => {
            onEdit={(leave) => handleEditLeave(leaveModalState.employeeIndex!, leave)}
            onDelete={(leaveId) => handleDeleteLeave(leaveModalState.employeeIndex!, leaveId)}
            onArchive={(leaveId) => handleArchiveLeave(leaveModalState.employeeIndex!, leaveId)}
+         />
+       )}
+
+       {/* Employee Calendar Modal */}
+       {calendarModal.isOpen && calendarModal.employee && (
+         <EmployeeCalendarModal
+           isOpen={calendarModal.isOpen}
+           onClose={() => setCalendarModal({ isOpen: false, employee: null })}
+           employee={calendarModal.employee}
+           shifts={shifts}
+           startDate={rules.startDate}
+           endDate={rules.endDate}
+           allEmployees={employees}
+           currentEmployeeIndex={employees.findIndex(e => e.id === calendarModal.employee?.id)}
+           onEmployeeChange={(newEmployee) => {
+             setCalendarModal({ ...calendarModal, employee: newEmployee });
+           }}
          />
        )}
 
