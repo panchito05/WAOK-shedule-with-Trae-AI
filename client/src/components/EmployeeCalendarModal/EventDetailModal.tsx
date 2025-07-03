@@ -59,7 +59,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md !bg-white !gap-0">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

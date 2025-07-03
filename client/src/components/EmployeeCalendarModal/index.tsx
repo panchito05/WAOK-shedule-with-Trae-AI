@@ -166,7 +166,7 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
   return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className={cn(
-          "transition-all duration-300 p-0 !gap-0 !bg-white",
+          "transition-all duration-300 p-0 !gap-0 !bg-white !flex !flex-col",
           isFullscreen 
             ? "!fixed !inset-0 !max-w-none !w-screen !h-screen !max-h-none !rounded-none !transform-none !translate-x-0 !translate-y-0 !top-0 !left-0"
             : "max-w-[98vw] w-[1400px] h-[92vh] max-h-[900px]"
