@@ -14,6 +14,7 @@ interface ShiftContextType {
   toggleGlobalOvertime: (active: boolean) => void;
   toggleShiftOvertime: (index: number, active: boolean) => void;
   setShiftOvertimeForDate: (shiftIndex: number, date: string, quantity: number, isActive: boolean) => void;
+  moveShiftOvertimeToDate: (shiftIndex: number, originalDate: string, newDate: string, quantity: number, isActive: boolean) => void;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -133,23 +134,72 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         overtimeEntries: shift.overtimeEntries ? [...shift.overtimeEntries] : []
       };
 
-      const existingEntryIndex = updatedShift.overtimeEntries.findIndex(entry => entry.date === date);
-
-      if (existingEntryIndex >= 0) {
-        // Creamos un nuevo array para mantener la inmutabilidad
-        updatedShift.overtimeEntries = [
-          ...updatedShift.overtimeEntries.slice(0, existingEntryIndex),
-          { date, quantity, isActive },
-          ...updatedShift.overtimeEntries.slice(existingEntryIndex + 1)
-        ];
+      // If quantity is 0, remove the entry
+      if (quantity === 0) {
+        updatedShift.overtimeEntries = updatedShift.overtimeEntries.filter(
+          entry => entry.date !== date
+        );
       } else {
-        updatedShift.overtimeEntries = [...updatedShift.overtimeEntries, { date, quantity, isActive }];
+        // Add or update entry
+        const existingEntryIndex = updatedShift.overtimeEntries.findIndex(entry => entry.date === date);
+
+        if (existingEntryIndex >= 0) {
+          // Creamos un nuevo array para mantener la inmutabilidad
+          updatedShift.overtimeEntries = [
+            ...updatedShift.overtimeEntries.slice(0, existingEntryIndex),
+            { date, quantity, isActive },
+            ...updatedShift.overtimeEntries.slice(existingEntryIndex + 1)
+          ];
+        } else {
+          updatedShift.overtimeEntries = [...updatedShift.overtimeEntries, { date, quantity, isActive }];
+        }
       }
 
       // Actualizar el shift en el array
       newShifts[shiftIndex] = updatedShift;
       
       // Actualizar la lista
+      updateList(currentList.id, { shifts: newShifts });
+    }
+  }, [getCurrentList, updateList]);
+
+  const moveShiftOvertimeToDate = useCallback((shiftIndex: number, originalDate: string, newDate: string, quantity: number, isActive: boolean) => {
+    const currentList = getCurrentList();
+    if (currentList) {
+      const newShifts = [...currentList.shifts];
+      const shift = newShifts[shiftIndex];
+      
+      // Crear una copia del shift para no modificar el original directamente
+      const updatedShift: ShiftRow = {
+        ...shift,
+        id: shift.id || `uid_${Math.random().toString(36).substr(2, 15)}`,
+        isOvertimeActive: shift.isOvertimeActive || false,
+        overtimeEntries: shift.overtimeEntries ? [...shift.overtimeEntries] : []
+      };
+
+      // Remove from original date
+      updatedShift.overtimeEntries = updatedShift.overtimeEntries.filter(
+        entry => entry.date !== originalDate
+      );
+
+      // Add to new date
+      const existingEntryIndex = updatedShift.overtimeEntries.findIndex(entry => entry.date === newDate);
+      if (existingEntryIndex >= 0) {
+        // Update existing entry
+        updatedShift.overtimeEntries = [
+          ...updatedShift.overtimeEntries.slice(0, existingEntryIndex),
+          { date: newDate, quantity, isActive },
+          ...updatedShift.overtimeEntries.slice(existingEntryIndex + 1)
+        ];
+      } else {
+        // Add new entry
+        updatedShift.overtimeEntries = [...updatedShift.overtimeEntries, { date: newDate, quantity, isActive }];
+      }
+
+      // Actualizar el shift en el array
+      newShifts[shiftIndex] = updatedShift;
+      
+      // Actualizar la lista (una sola vez)
       updateList(currentList.id, { shifts: newShifts });
     }
   }, [getCurrentList, updateList]);
@@ -163,7 +213,8 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     deleteShift,
     toggleGlobalOvertime,
     toggleShiftOvertime,
-    setShiftOvertimeForDate
+    setShiftOvertimeForDate,
+    moveShiftOvertimeToDate
   }), [
     shifts, 
     isGlobalOvertimeActive,
@@ -172,7 +223,8 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     deleteShift,
     toggleGlobalOvertime,
     toggleShiftOvertime,
-    setShiftOvertimeForDate
+    setShiftOvertimeForDate,
+    moveShiftOvertimeToDate
   ]);
 
   return (

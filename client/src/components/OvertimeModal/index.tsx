@@ -19,7 +19,7 @@ interface OvertimeModalProps {
 }
 
 const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift }) => {
-  const { toggleGlobalOvertime, toggleShiftOvertime, shifts, isGlobalOvertimeActive, setShiftOvertimeForDate } = useShiftContext();
+  const { toggleGlobalOvertime, toggleShiftOvertime, shifts, isGlobalOvertimeActive, setShiftOvertimeForDate, moveShiftOvertimeToDate } = useShiftContext();
   const { rules } = useRules();
   const { getCurrentList, refreshTrigger } = useEmployeeLists();
   const { shiftData } = usePersonnelData();
@@ -35,6 +35,10 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
   const [selectedDate, setSelectedDate] = React.useState(rules.startDate);
   const [overtimeQuantity, setOvertimeQuantity] = React.useState(1);
   const [isOvertimeActive, setIsOvertimeActive] = React.useState(true);
+  const [existingOvertime, setExistingOvertime] = React.useState<{quantity: number, isActive: boolean} | null>(null);
+  const [editMode, setEditMode] = React.useState(false);
+  const [originalDate, setOriginalDate] = React.useState<string | null>(null);
+  const [hasUserInteracted, setHasUserInteracted] = React.useState(false);
 
   // Update current staff info when date changes
   React.useEffect(() => {
@@ -74,13 +78,37 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
         idealStaff,
         availablePositions: Math.max(0, idealStaff - count)
       });
+      
+      // Check for existing overtime entry
+      if (currentShift && currentShift.overtimeEntries && !editMode) {
+        const existingEntry = currentShift.overtimeEntries.find(
+          entry => entry.date === selectedDate
+        );
+        if (existingEntry) {
+          setExistingOvertime(existingEntry);
+          // Don't load values or enter edit mode automatically
+        } else {
+          setExistingOvertime(null);
+          // Reset values only if not in edit mode and user hasn't interacted
+          if (!editMode && !hasUserInteracted) {
+            setOvertimeQuantity(1);
+            setIsOvertimeActive(true);
+          }
+        }
+      }
     }
-  }, [shift.index, selectedDate, shifts, getCurrentList, shiftData]);
+  }, [shift.index, selectedDate, shifts, getCurrentList, shiftData, editMode, hasUserInteracted]);
 
   // Update selectedDate when modal opens
   React.useEffect(() => {
     if (isOpen) {
       setSelectedDate(rules.startDate);
+      setEditMode(false);
+      setOriginalDate(null);
+      setExistingOvertime(null);
+      setOvertimeQuantity(1);
+      setIsOvertimeActive(true);
+      setHasUserInteracted(false);
     }
   }, [isOpen, rules.startDate]);
 
@@ -261,7 +289,15 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-[500px] relative">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold mb-4">Add Overtime for Specific Date</h3>
+                <h3 className="text-xl font-bold mb-4">
+                  {editMode ? 'Edit/Delete Overtime for Specific Date' : 'Add Overtime for Specific Date'}
+                </h3>
+                
+                {editMode && originalDate !== selectedDate && (
+                  <p className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded mb-3">
+                    ⚠️ Moving overtime from {originalDate} to {selectedDate}
+                  </p>
+                )}
 
                 <div className="bg-gray-100 p-4 rounded-lg mb-4">
                   <h4 className="font-semibold mb-2">Shift Information</h4>
@@ -273,6 +309,16 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                   </div>
                 </div>
 
+                {existingOvertime && (
+                  <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+                    <p className="text-sm font-semibold text-blue-800">Current Overtime Settings:</p>
+                    <p className="text-sm text-blue-700">
+                      Quantity: {existingOvertime.quantity} | 
+                      Status: {existingOvertime.isActive ? 'Active ✓' : 'Inactive ✗'}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Select Date
@@ -281,7 +327,10 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value);
+                        setHasUserInteracted(false); // Reset when date changes
+                      }}
                       className="w-full border border-gray-300 rounded px-3 py-2 pr-10"
                     />
                     <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -296,7 +345,10 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                     type="number"
                     min="1"
                     value={overtimeQuantity}
-                    onChange={(e) => setOvertimeQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => {
+                      setHasUserInteracted(true);
+                      setOvertimeQuantity(Math.max(1, parseInt(e.target.value) || 1));
+                    }}
                     className="w-full border border-gray-300 rounded px-3 py-2"
                   />
                 </div>
@@ -320,23 +372,77 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
                   >
                     Cancel
                   </button>
-                  <button
-                    onClick={() => {
-                      if (typeof shift.index === 'number' && selectedDate) {
-                        setShiftOvertimeForDate(shift.index, selectedDate, overtimeQuantity, isOvertimeActive);
-                        setShowDateOvertime(false);
-                        setShowSuccess(true);
-                        setTimeout(() => {
-                          setShowSuccess(false);
-                          onClose();
-                        }, 2000);
-                      }
-                    }}
-                    disabled={!selectedDate}
-                    className="px-4 py-2 bg-[#19b08d] text-white rounded hover:bg-[#148a73] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Save Overtime
-                  </button>
+                  {editMode && existingOvertime && (
+                    <button
+                      onClick={() => {
+                        if (typeof shift.index === 'number' && selectedDate) {
+                          // Remove overtime by setting quantity to 0
+                          setShiftOvertimeForDate(shift.index, selectedDate, 0, false);
+                          setShowDateOvertime(false);
+                          setShowSuccess(true);
+                          setTimeout(() => {
+                            setShowSuccess(false);
+                            onClose();
+                          }, 2000);
+                        }
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete Overtime
+                    </button>
+                  )}
+                  
+                  {/* Edit button when overtime exists but not in edit mode */}
+                  {existingOvertime && !editMode && (
+                    <button
+                      onClick={() => {
+                        // Load values and enter edit mode
+                        setOvertimeQuantity(existingOvertime.quantity);
+                        setIsOvertimeActive(existingOvertime.isActive);
+                        setEditMode(true);
+                        setOriginalDate(selectedDate);
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Edit Overtime
+                    </button>
+                  )}
+                  
+                  {/* Save/Update button when no overtime exists OR in edit mode */}
+                  {(!existingOvertime || editMode) && (
+                    <button
+                      onClick={() => {
+                        if (typeof shift.index === 'number' && selectedDate) {
+                          // If date changed in edit mode, use moveShiftOvertimeToDate
+                          if (editMode && originalDate && originalDate !== selectedDate) {
+                            moveShiftOvertimeToDate(shift.index, originalDate, selectedDate, overtimeQuantity, isOvertimeActive);
+                            // Add small delay to ensure context updates propagate
+                            setTimeout(() => {
+                              setShowDateOvertime(false);
+                              setShowSuccess(true);
+                              setTimeout(() => {
+                                setShowSuccess(false);
+                                onClose();
+                              }, 2000);
+                            }, 100);
+                          } else {
+                            // Save to current date (new or same)
+                            setShiftOvertimeForDate(shift.index, selectedDate, overtimeQuantity, isOvertimeActive);
+                            setShowDateOvertime(false);
+                            setShowSuccess(true);
+                            setTimeout(() => {
+                              setShowSuccess(false);
+                              onClose();
+                            }, 2000);
+                          }
+                        }
+                      }}
+                      disabled={!selectedDate}
+                      className="px-4 py-2 bg-[#19b08d] text-white rounded hover:bg-[#148a73] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {editMode ? 'Update Overtime' : 'Save Overtime'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
