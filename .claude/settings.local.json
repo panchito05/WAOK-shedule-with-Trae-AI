@@ -29,6 +29,9 @@
       "Bash(mkdir:*)",
       "Bash(npm install:*)",
       "Bash(find:*)",
+      "Bash(rg:*)",
+      "Bash(cd:*)",
+      "Bash(find:*)",
       "Bash(rg:*)"
     ],
     "deny": []

@@ -132,7 +132,7 @@ function formatDateForTitle(date: Date): string {
 }
 
 function calculatePreferenceMatchPercentage(employee: Employee, shifts: Shift[], startDateStr: string, endDateStr: string): string {
-    if (!employee || !Array.isArray(employee.preferences)) {
+    if (!employee || !Array.isArray(employee.shiftPreferences)) {
         return '0.00';
     }
 
@@ -141,7 +141,7 @@ function calculatePreferenceMatchPercentage(employee: Employee, shifts: Shift[],
     let totalScheduledOrLeaveDays = 0;
     let successfulMatchDays = 0;
 
-    const firstPreferenceIndex = employee.preferences.indexOf(1);
+    const firstPreferenceIndex = employee.shiftPreferences.indexOf(1);
     const preferredShiftId = (firstPreferenceIndex !== -1 && shifts[firstPreferenceIndex]) ? shifts[firstPreferenceIndex].id : null;
 
     for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
@@ -1201,7 +1201,7 @@ const EmployeeScheduleTable: React.FC = () => {
       <div className="w-full bg-white rounded-lg shadow-lg p-6 mt-8 font-['Viata']">
       <div className="bg-gradient-to-r from-[#19b08d] to-[#117cee] p-4 rounded-t-lg mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white" data-en="Employee Schedule" data-es="Horario Empleados">Employee Schedule Provisional</h2> {/* Added data-en/es */}
-        <div className="space-x-2">
+        <div className="flex items-center space-x-2">
           {/* Toggle button for the table */}
           <button
              id="toggle-employee-schedule-table"

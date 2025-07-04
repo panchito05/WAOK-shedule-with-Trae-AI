@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import { edgeAutoFocus } from '@/utils/edgeCompat';
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -22,10 +23,17 @@ export const CommentModal: React.FC<CommentModalProps> = ({
   shiftName,
 }) => {
   const [comment, setComment] = useState(currentComment);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setComment(currentComment);
   }, [currentComment]);
+
+  useEffect(() => {
+    if (isOpen && textareaRef.current) {
+      edgeAutoFocus(textareaRef.current);
+    }
+  }, [isOpen]);
 
   const handleSave = () => {
     onSave(comment);
@@ -75,12 +83,12 @@ export const CommentModal: React.FC<CommentModalProps> = ({
               Comment
             </label>
             <textarea
+              ref={textareaRef}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               rows={4}
               placeholder="Enter your comment here..."
-              autoFocus
             />
             <p className="mt-2 text-xs text-gray-500">
               This comment is visible to both the supervisor and the employee

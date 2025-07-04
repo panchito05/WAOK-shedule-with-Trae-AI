@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import { isEdge } from '@/utils/edgeCompat';
 
 interface Leave {
   id: string;
@@ -153,13 +154,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
+              className={`w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
                 [&::-webkit-calendar-picker-indicator]:opacity-0 
                 [&::-webkit-calendar-picker-indicator]:absolute 
                 [&::-webkit-calendar-picker-indicator]:inset-0 
                 [&::-webkit-calendar-picker-indicator]:w-full 
                 [&::-webkit-calendar-picker-indicator]:h-full 
-                [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                ${isEdge() ? '[&::-ms-clear]:display-none [&::-ms-reveal]:display-none' : ''}`}
               placeholder="mm/dd/yyyy"
             />
           </div>
@@ -172,13 +174,14 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
+              className={`w-full border border-gray-300 rounded px-3 py-2 cursor-pointer relative
                 [&::-webkit-calendar-picker-indicator]:opacity-0 
                 [&::-webkit-calendar-picker-indicator]:absolute 
                 [&::-webkit-calendar-picker-indicator]:inset-0 
                 [&::-webkit-calendar-picker-indicator]:w-full 
                 [&::-webkit-calendar-picker-indicator]:h-full 
-                [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                ${isEdge() ? '[&::-ms-clear]:display-none [&::-ms-reveal]:display-none' : ''}`}
               placeholder="mm/dd/yyyy"
             />
           </div>

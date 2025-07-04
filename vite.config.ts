@@ -27,5 +27,15 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Mejorar compatibilidad con navegadores antiguos
+    target: ['es2015', 'edge88', 'firefox78', 'chrome87', 'safari14'],
+    // Incluir polyfills necesarios
+    polyfillModulePreload: true,
+  },
+  // Optimización para mejor compatibilidad
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2015',
+    },
   },
 });

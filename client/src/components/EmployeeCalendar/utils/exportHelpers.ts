@@ -2,6 +2,7 @@ import { CalendarEvent } from '../types/calendar.types';
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { isEdge } from '@/utils/edgeCompat';
 
 // Export calendar as PDF
 export const exportToPDF = async (
@@ -237,9 +238,35 @@ export const printCalendar = (
       <script>
         window.onload = function() {
           window.print();
+          ${isEdge() ? `
+          // Edge compatibility: use matchMedia as fallback
+          const mediaQueryList = window.matchMedia('print');
+          let isPrinting = true;
+          
+          const handlePrintChange = function(mql) {
+            if (!mql.matches && isPrinting) {
+              isPrinting = false;
+              window.close();
+            }
+          };
+          
+          if (mediaQueryList.addEventListener) {
+            mediaQueryList.addEventListener('change', handlePrintChange);
+          } else if (mediaQueryList.addListener) {
+            mediaQueryList.addListener(handlePrintChange);
+          }
+          
+          // Fallback timeout for Edge
+          setTimeout(function() {
+            if (isPrinting) {
+              window.close();
+            }
+          }, 1000);
+          ` : `
           window.onafterprint = function() {
             window.close();
           };
+          `}
         };
       </script>
     </body>

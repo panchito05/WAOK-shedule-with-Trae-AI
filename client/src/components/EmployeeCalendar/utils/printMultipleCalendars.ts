@@ -2,6 +2,7 @@ import { Employee, ShiftRow } from '../../../types/common';
 import { transformShiftsToEvents, transformLeavesToEvents, transformCommentsToEvents } from './eventTransformers';
 import { CalendarEvent } from '../types/calendar.types';
 import { format } from 'date-fns';
+import { isEdge } from '@/utils/edgeCompat';
 
 export type PrintPeriod = 'day' | 'week' | 'fortnight' | 'month';
 
@@ -183,9 +184,35 @@ export const printMultipleCalendars = (
       <script>
         window.onload = function() {
           window.print();
+          ${isEdge() ? `
+          // Edge compatibility: use matchMedia as fallback
+          const mediaQueryList = window.matchMedia('print');
+          let isPrinting = true;
+          
+          const handlePrintChange = function(mql) {
+            if (!mql.matches && isPrinting) {
+              isPrinting = false;
+              window.close();
+            }
+          };
+          
+          if (mediaQueryList.addEventListener) {
+            mediaQueryList.addEventListener('change', handlePrintChange);
+          } else if (mediaQueryList.addListener) {
+            mediaQueryList.addListener(handlePrintChange);
+          }
+          
+          // Fallback timeout for Edge
+          setTimeout(function() {
+            if (isPrinting) {
+              window.close();
+            }
+          }, 1000);
+          ` : `
           window.onafterprint = function() {
             window.close();
           };
+          `}
         };
       </script>
     </body>

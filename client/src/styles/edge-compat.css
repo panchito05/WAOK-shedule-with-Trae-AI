@@ -1,0 +1,133 @@
+/* Edge-specific compatibility styles */
+
+/* Fix para inputs de fecha en Edge */
+@supports (-ms-ime-align: auto) {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+  
+  input[type="date"]::-ms-clear,
+  input[type="date"]::-ms-reveal {
+    display: none;
+  }
+}
+
+/* Fix para scroll en Edge */
+@supports (-ms-overflow-style: none) {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+  }
+}
+
+/* Fix para flexbox gaps en Edge antiguo */
+@supports not (gap: 1rem) {
+  .flex.gap-4 > * + * {
+    margin-left: 1rem;
+  }
+  
+  .flex.gap-2 > * + * {
+    margin-left: 0.5rem;
+  }
+  
+  .flex.gap-3 > * + * {
+    margin-left: 0.75rem;
+  }
+}
+
+/* Fix para grid gaps en Edge antiguo */
+@supports not (gap: 1rem) {
+  .grid.gap-4 {
+    margin: -0.5rem;
+  }
+  
+  .grid.gap-4 > * {
+    padding: 0.5rem;
+  }
+}
+
+/* Fix para backdrop-filter en Edge */
+@supports not (backdrop-filter: blur(10px)) {
+  .backdrop-blur {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  
+  .backdrop-blur-sm {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* Fix para position sticky en Edge */
+@supports not (position: sticky) {
+  .sticky {
+    position: relative;
+  }
+}
+
+/* Fix para aspect-ratio en Edge */
+@supports not (aspect-ratio: 1/1) {
+  .aspect-square {
+    position: relative;
+  }
+  
+  .aspect-square::before {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+  }
+  
+  .aspect-square > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+/* Fix para focus-visible en Edge */
+@supports not selector(:focus-visible) {
+  *:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  
+  button:focus,
+  a:focus,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+}
+
+/* Fix para drag and drop en Edge */
+@-ms-viewport {
+  width: device-width;
+}
+
+/* Edge-specific drag handle styles */
+.edge-drag-handle {
+  -ms-touch-action: none;
+  touch-action: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Fix para animaciones en Edge */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  /* Reducir animaciones en Edge para mejor rendimiento */
+  * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+}

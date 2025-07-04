@@ -13,6 +13,7 @@ import SelectEmployeesForThisCombinationWorkingHours from './components/SelectEm
 import AddEmployees from './components/AddEmployees';
 import PersonnelTable from './components/IdealNumberOfPersonnelPerShiftAndDay';
 import ScheduleRulesTable from './components/ScheduleRulesTable';
+import { BrowserCompatibilityBanner } from './components/BrowserCompatibilityBanner';
 
 export type ActiveView = 'all' | 'schedule' | 'employees' | 'personnel' | 'rules';
 
@@ -27,6 +28,7 @@ function App() {
             <ShiftPrioritiesProvider>
               <SelectedEmployeesProvider>
                 <div className="min-h-screen bg-gray-100">
+                  <BrowserCompatibilityBanner />
                   <Header onViewChange={setActiveView} />
                   <div className="px-8">
                     {activeView === 'all' && (
