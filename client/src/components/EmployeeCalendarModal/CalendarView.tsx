@@ -1,22 +1,35 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
+import { Calendar, momentLocalizer, View, Views, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
 import { CalendarViewProps, CalendarEvent } from '../EmployeeCalendar/types/calendar.types';
 import { EventTooltip } from './EventTooltip';
 import { EventDetailModal } from './EventDetailModal';
+import { AddShiftModal } from './AddShiftModal';
 import { cn } from '../../lib/utils';
+import { ShiftRow } from '../../types/common';
 
 const localizer = momentLocalizer(moment);
 
-export const CalendarView: React.FC<CalendarViewProps> = ({
+interface ExtendedCalendarViewProps extends CalendarViewProps {
+  shifts?: ShiftRow[];
+  onShiftChange?: (employeeId: string, date: string, shiftId: string) => void;
+  onAddLeave?: () => void;
+}
+
+export const CalendarView: React.FC<ExtendedCalendarViewProps> = ({
   events,
   employee,
   onEventClick,
-  onNavigate
+  onNavigate,
+  shifts = [],
+  onShiftChange,
+  onAddLeave
 }) => {
   const [view, setView] = React.useState<View>(Views.MONTH);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventDetail, setShowEventDetail] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [showAddShift, setShowAddShift] = useState(false);
 
   // Custom event style getter
   const eventStyleGetter = (event: CalendarEvent) => {
@@ -60,6 +73,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setShowEventDetail(true);
     if (onEventClick) {
       onEventClick(event);
+    }
+  };
+
+  // Handle slot selection (empty day)
+  const handleSlotSelect = (slotInfo: SlotInfo) => {
+    // Check if there's already an event on this date
+    const dateStr = moment(slotInfo.start).format('YYYY-MM-DD');
+    const hasEvent = events.some(event => 
+      moment(event.start).format('YYYY-MM-DD') === dateStr &&
+      event.resource.type === 'shift'
+    );
+    
+    if (!hasEvent && onShiftChange) {
+      setSelectedSlot(slotInfo.start);
+      setShowAddShift(true);
     }
   };
 
@@ -174,6 +202,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           endAccessor="end"
           style={{ height: '100%', minHeight: '500px' }}
           onSelectEvent={handleEventSelect}
+          onSelectSlot={handleSlotSelect}
+          selectable={!!onShiftChange}
           onNavigate={onNavigate}
           eventPropGetter={eventStyleGetter}
           components={components}
@@ -195,7 +225,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           setShowEventDetail(false);
           setSelectedEvent(null);
         }}
+        onShiftChange={onShiftChange}
+        onAddLeave={onAddLeave}
+        shifts={shifts}
+        employee={employee}
       />
+
+      {/* Add Shift Modal */}
+      {selectedSlot && (
+        <AddShiftModal
+          isOpen={showAddShift}
+          onClose={() => {
+            setShowAddShift(false);
+            setSelectedSlot(null);
+          }}
+          date={selectedSlot}
+          employee={employee}
+          shifts={shifts}
+          onAddShift={onShiftChange || (() => {})}
+          onAddLeave={onAddLeave}
+        />
+      )}
     </>
   );
 };

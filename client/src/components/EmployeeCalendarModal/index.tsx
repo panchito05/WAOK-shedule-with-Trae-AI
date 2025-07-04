@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Maximize2, Minimize2, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { CalendarView } from './CalendarView';
@@ -10,6 +11,9 @@ import { CalendarStats } from './CalendarStats';
 import { transformShiftsToEvents, transformLeavesToEvents, transformCommentsToEvents } from '../EmployeeCalendar/utils/eventTransformers';
 import { EmployeeCalendarProps, CalendarEvent, CalendarFilters as CalendarFiltersType } from '../EmployeeCalendar/types/calendar.types';
 import { cn } from '../../lib/utils';
+import { useShiftContext } from '../../context/ShiftContext';
+import { useEmployeeLists } from '../../context/EmployeeListsContext';
+import LeaveModal from '../LeaveModal';
 
 export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
   employee,
@@ -22,6 +26,8 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
   currentEmployeeIndex = 0,
   onEmployeeChange
 }) => {
+  const { shifts: availableShifts } = useShiftContext();
+  const { getCurrentList, updateList } = useEmployeeLists();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date(startDate));
   const [currentEmployee, setCurrentEmployee] = useState(employee);
@@ -31,6 +37,13 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
     showLeaves: true,
     showComments: true,
     leaveTypes: []
+  });
+  const [leaveModalState, setLeaveModalState] = useState<{
+    isOpen: boolean;
+    date: string;
+  }>({
+    isOpen: false,
+    date: ''
   });
   const calendarRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -133,6 +146,123 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
     setCurrentDate(date);
   };
 
+  // Handle shift change from calendar
+  const handleShiftChange = useCallback((employeeId: string, date: string, shiftId: string) => {
+    const currentList = getCurrentList();
+    if (!currentList) return;
+
+    // Find the employee in the list
+    const employeeIndex = currentList.employees.findIndex(emp => emp.id === employeeId);
+    if (employeeIndex === -1) return;
+
+    const updatedEmployees = [...currentList.employees];
+    const employee = { ...updatedEmployees[employeeIndex] };
+
+    // Initialize manualShifts if not exists
+    if (!employee.manualShifts) {
+      employee.manualShifts = {};
+    }
+
+    // Update the manual shift for the specific date
+    if (shiftId === 'day-off' || shiftId === '') {
+      // Remove manual shift for this date
+      delete employee.manualShifts[date];
+    } else {
+      // Set the manual shift
+      employee.manualShifts[date] = shiftId;
+    }
+
+    // Update the employee in the list
+    updatedEmployees[employeeIndex] = employee;
+    updateList(currentList.id, { employees: updatedEmployees });
+
+    // Refresh the calendar events by updating the current employee
+    if (employee.id === currentEmployee.id) {
+      setCurrentEmployee(employee);
+    }
+  }, [getCurrentList, updateList, currentEmployee]);
+
+  // Handle add leave
+  const handleAddLeave = useCallback((date?: string) => {
+    setLeaveModalState({
+      isOpen: true,
+      date: date || format(new Date(), 'yyyy-MM-dd')
+    });
+  }, []);
+
+  // Handle save leave
+  const handleSaveLeave = useCallback((leaveData: {
+    startDate: string;
+    endDate: string;
+    type: string;
+    hoursPerDay: number;
+  }) => {
+    const currentList = getCurrentList();
+    if (!currentList) return;
+
+    // Find the current employee in the list
+    const employeeIndex = currentList.employees.findIndex(emp => emp.id === currentEmployee.id);
+    if (employeeIndex === -1) return;
+
+    const updatedEmployees = [...currentList.employees];
+    const employee = { ...updatedEmployees[employeeIndex] };
+
+    // Create new leave entry
+    const newLeave = {
+      id: crypto.randomUUID(),
+      startDate: leaveData.startDate,
+      endDate: leaveData.endDate,
+      leaveType: leaveData.type,
+      hoursPerDay: leaveData.hoursPerDay
+    };
+
+    if (!employee.leave) {
+      employee.leave = [];
+    }
+    employee.leave.push(newLeave);
+
+    // Update the employee in the list
+    updatedEmployees[employeeIndex] = employee;
+    updateList(currentList.id, { employees: updatedEmployees });
+
+    // Update current employee to refresh calendar
+    setCurrentEmployee(employee);
+
+    // Close leave modal
+    setLeaveModalState({ isOpen: false, date: '' });
+  }, [getCurrentList, updateList, currentEmployee]);
+
+  // Handle edit leave
+  const handleEditLeave = useCallback((leave: any) => {
+    // Implementation similar to handleSaveLeave but updates existing leave
+    console.log('Edit leave:', leave);
+  }, []);
+
+  // Handle delete leave
+  const handleDeleteLeave = useCallback((leaveId: string) => {
+    const currentList = getCurrentList();
+    if (!currentList) return;
+
+    const employeeIndex = currentList.employees.findIndex(emp => emp.id === currentEmployee.id);
+    if (employeeIndex === -1) return;
+
+    const updatedEmployees = [...currentList.employees];
+    const employee = { ...updatedEmployees[employeeIndex] };
+
+    if (employee.leave) {
+      employee.leave = employee.leave.filter(l => l.id !== leaveId);
+      updatedEmployees[employeeIndex] = employee;
+      updateList(currentList.id, { employees: updatedEmployees });
+      setCurrentEmployee(employee);
+    }
+  }, [getCurrentList, updateList, currentEmployee]);
+
+  // Handle archive leave
+  const handleArchiveLeave = useCallback((leaveId: string) => {
+    // Similar to delete but archives instead
+    console.log('Archive leave:', leaveId);
+  }, []);
+
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -164,6 +294,7 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
   if (!isOpen) return null;
 
   return (
+    <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className={cn(
           "transition-all duration-300 p-0 !gap-0 !bg-white !flex !flex-col",
@@ -238,6 +369,9 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
                 employee={currentEmployee}
                 onEventClick={handleEventClick}
                 onNavigate={handleNavigate}
+                shifts={availableShifts}
+                onShiftChange={handleShiftChange}
+                onAddLeave={() => handleAddLeave()}
               />
             </div>
           </div>
@@ -263,5 +397,20 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
         </div>
       </DialogContent>
     </Dialog>
-    );
+
+    {/* Leave Modal - Rendered outside of Dialog to ensure proper z-index */}
+    {leaveModalState.isOpen && (
+      <LeaveModal
+        isOpen={leaveModalState.isOpen}
+        onClose={() => setLeaveModalState({ isOpen: false, date: '' })}
+        employeeName={currentEmployee.name}
+        existingLeaves={currentEmployee.leave || []}
+        onSave={handleSaveLeave}
+        onEdit={handleEditLeave}
+        onDelete={handleDeleteLeave}
+        onArchive={handleArchiveLeave}
+      />
+    )}
+    </>
+  );
 };

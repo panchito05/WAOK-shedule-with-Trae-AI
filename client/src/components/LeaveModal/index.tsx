@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 
 interface Leave {
   id: string;
@@ -117,31 +123,19 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-12 z-50"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-lg p-6 w-[600px] relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-6 w-6" />
-        </button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[600px] !bg-white !gap-0">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">Select Date or Date Range</DialogTitle>
+        </DialogHeader>
 
-        <h2 className="text-xl font-bold mb-6">Select Date or Date Range</h2>
+        <div className="p-6 pt-4">
+          <div className="bg-[#19b08d] text-white px-4 py-2 rounded mb-6">
+            Adding Leave for: {employeeName}
+          </div>
 
-        <div className="bg-[#19b08d] text-white px-4 py-2 rounded mb-6">
-          Adding Leave for: {employeeName}
-        </div>
-
-        <div className="space-y-4">
+          <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               From
@@ -328,8 +322,9 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

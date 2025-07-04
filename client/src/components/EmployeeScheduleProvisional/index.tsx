@@ -1787,9 +1787,9 @@ const EmployeeScheduleTable: React.FC = () => {
                                     key={dateString}
                                     className={`px-2 py-1 border border-gray-300 text-center`}
                                     style={{
-                                         backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined
+                                         backgroundColor: date.getUTCDay() === dateRange[0].getUTCDay() ? 'rgba(25, 176, 141, 0.5)' : undefined,
+                                         width: `${columnWidths.dates}px`
                                      }}
-                                    style={{ width: `${columnWidths.dates}px` }}
                                 >
                                     <div className="flex flex-col items-center">
                                         {/* Scheduled Count with Staff button */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarEvent } from '../EmployeeCalendar/types/calendar.types';
 import { format, differenceInHours, differenceInMinutes } from 'date-fns';
 import {
@@ -9,7 +9,9 @@ import {
   DialogDescription,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Clock, Calendar, User, MessageSquare, Briefcase, X } from 'lucide-react';
+import { Clock, Calendar, User, MessageSquare, Briefcase, X, Edit2 } from 'lucide-react';
+import { ShiftSelector } from './ShiftSelector';
+import { ShiftRow } from '../../types/common';
 
 interface EventDetailModalProps {
   event: CalendarEvent | null;
@@ -17,6 +19,10 @@ interface EventDetailModalProps {
   onClose: () => void;
   onEdit?: (event: CalendarEvent) => void;
   onDelete?: (event: CalendarEvent) => void;
+  onShiftChange?: (employeeId: string, date: string, shiftId: string) => void;
+  onAddLeave?: () => void;
+  shifts?: ShiftRow[];
+  employee?: any;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
@@ -24,8 +30,21 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   isOpen,
   onClose,
   onEdit,
-  onDelete
+  onDelete,
+  onShiftChange,
+  onAddLeave,
+  shifts = [],
+  employee
 }) => {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedShift, setSelectedShift] = useState('');
+
+  useEffect(() => {
+    if (event?.resource.type === 'shift' && event.resource.shiftId) {
+      setSelectedShift(event.resource.shiftId);
+    }
+  }, [event]);
+
   if (!event) return null;
 
   const getEventIcon = () => {
@@ -66,14 +85,27 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               {getEventIcon()}
               <DialogTitle>{getEventTypeLabel()}</DialogTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {event.resource.type === 'shift' && onShiftChange && !event.resource.isFixed && !event.resource.isLocked && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="h-8 w-8"
+                  title={isEditMode ? "Cancel edit" : "Edit shift"}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <DialogDescription>
             Event details for {event.resource.employeeName}
@@ -81,10 +113,26 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
-          {/* Event Title */}
+          {/* Event Title / Shift Selection */}
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-1">Title</h4>
-            <p className="text-base font-medium">{event.title}</p>
+            {isEditMode && event.resource.type === 'shift' ? (
+              <ShiftSelector
+                value={selectedShift}
+                onChange={setSelectedShift}
+                shifts={shifts}
+                employee={employee || { id: event.resource.employeeId, name: event.resource.employeeName }}
+                date={format(event.start, 'yyyy-MM-dd')}
+                onAddLeaveSelect={() => {
+                  if (onAddLeave) {
+                    onAddLeave();
+                    onClose();
+                  }
+                }}
+              />
+            ) : (
+              <p className="text-base font-medium">{event.title}</p>
+            )}
           </div>
 
           {/* Date & Time */}
@@ -171,30 +219,61 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete || isEditMode) && (
           <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
-            {onEdit && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onEdit(event);
-                  onClose();
-                }}
-              >
-                Edit
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="outline"
-                className="text-red-600 hover:text-red-700"
-                onClick={() => {
-                  onDelete(event);
-                  onClose();
-                }}
-              >
-                Delete
-              </Button>
+            {isEditMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setSelectedShift(event.resource.shiftId || '');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (onShiftChange && selectedShift !== event.resource.shiftId) {
+                      onShiftChange(
+                        event.resource.employeeId,
+                        format(event.start, 'yyyy-MM-dd'),
+                        selectedShift
+                      );
+                      onClose();
+                    }
+                    setIsEditMode(false);
+                  }}
+                >
+                  Save
+                </Button>
+              </>
+            ) : (
+              <>
+                {onEdit && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onEdit(event);
+                      onClose();
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      onDelete(event);
+                      onClose();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </>
             )}
           </div>
         )}
