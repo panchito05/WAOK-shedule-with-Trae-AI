@@ -1462,7 +1462,7 @@ const EmployeeScheduleTable: React.FC = () => {
                     return (
                       <td
                          key={dateString}
-                         className={`px-1 py-1 border border-gray-300 ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} ${getHighlightClass(index, dateString)}
+                         className={`px-1 py-1 border border-gray-300 cursor-pointer ${exceedsMax || violatesMinRest ? 'bg-yellow-300' : ''} ${getHighlightClass(index, dateString)}
                          `}
                          style={{ 
                               position: 'relative', 
@@ -1473,6 +1473,8 @@ const EmployeeScheduleTable: React.FC = () => {
                                   ? 'rgba(25, 176, 141, 0.5)' 
                                   : undefined
                           }}
+                         onClick={(e) => handleCellClick(index, dateString, e)}
+                         onDoubleClick={(e) => handleCellDoubleClick(index, dateString, e)}
                       >
                         <EmployeeShiftTooltip
                           employee={employee}
@@ -1483,9 +1485,7 @@ const EmployeeScheduleTable: React.FC = () => {
                           minWeekendsOffPerMonth={parseInt(rules.weekendsOffPerMonth) || 0}
                         >
                           <div 
-                            className="w-full h-full cursor-pointer"
-                            onClick={(e) => handleCellClick(index, dateString, e)}
-                            onDoubleClick={(e) => handleCellDoubleClick(index, dateString, e)}
+                            className="w-full h-full"
                           >
                            {isOnLeave ? (
                                // Render leave info if on leave
