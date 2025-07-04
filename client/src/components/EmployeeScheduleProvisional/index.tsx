@@ -505,19 +505,47 @@ function shouldDisplayOvertime(shift: Shift, dateString: string, allEmployees: E
         totalOvertime = staffNeeded;
     }
 
-    // Specific day overtime (always added)
+    // Specific day overtime entries
     if (shift.overtimeEntries) {
         const entry = shift.overtimeEntries.find(
             entry => entry.date === dateString
         );
-        if (entry) {
-            if (entry.isActive) {
+        if (entry && entry.isActive) {
+            // If general overtime is NOT active, entries are the only overtime
+            if (!shift.isOvertimeActive) {
+                totalOvertime = entry.quantity;
+            } else {
+                // If general is active, add entries on top
                 totalOvertime += entry.quantity;
             }
         }
     }
 
     return totalOvertime;
+}
+
+function calculateAvailableOvertime(shift: Shift, dateString: string, allEmployees: Employee[]): number {
+    let totalAvailable = 0;
+    const date = new Date(dateString + 'T00:00:00Z');
+    const dayOfWeek = daysOfWeek[date.getUTCDay()];
+    
+    // Calculate staff needed (always, regardless of active status)
+    const idealStaff = shift.nurseCounts[dayOfWeek] || 0;
+    const currentStaff = countScheduledEmployees(shift, date, allEmployees);
+    const staffNeeded = Math.max(0, idealStaff - currentStaff);
+    totalAvailable = staffNeeded;
+    
+    // Subtract ALL specific day entries (active or not) from available
+    if (shift.overtimeEntries) {
+        const entry = shift.overtimeEntries.find(e => e.date === dateString);
+        if (entry) {
+            totalAvailable -= entry.quantity;
+            // Ensure available doesn't go negative
+            totalAvailable = Math.max(0, totalAvailable);
+        }
+    }
+    
+    return totalAvailable;
 }
 
 function exceedsMaxConsecutiveShifts(employee: Employee, dateString: string, rules: Rules, shifts: Shift[]): boolean {
@@ -1240,7 +1268,7 @@ const EmployeeScheduleTable: React.FC = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white shadow-lg border border-gray-200">
               <DropdownMenuItem 
                 onClick={() => printMultipleCalendars(employees, shifts, rules.startDate, rules.endDate, 'day')}
               >
@@ -1747,29 +1775,71 @@ const EmployeeScheduleTable: React.FC = () => {
                                         endTime: convertTo12Hour(shift.end) 
                                       } 
                                     })}
-                                    className={`add-overtime-btn px-2 py-1 rounded text-sm mt-1 text-white ${
-                                      shift.isOvertimeActive ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
-                                    }`}
+                                    className="add-overtime-btn px-2 py-1 rounded text-sm mt-1 text-white bg-blue-500 hover:bg-blue-600"
                                   >
                                       Add or Edit Overtime
                                       <br/>
-                                      <span className="available-count text-xs">
-                                          {shift.isOvertimeActive && <span className="font-bold">[Overtime Active] </span>}
-                                           Available: {dateRange.reduce((sum, date) =>
+                                      {(() => {
+                                          // Calculate active overtime (what shouldDisplayOvertime does)
+                                          const activeOvertime = dateRange.reduce((sum, date) =>
                                               sum + shouldDisplayOvertime(shift, date.toISOString().split('T')[0], employees, timeRanges)
-                                           , 0)} {/* Sum up overtime across all dates */}
-                                      </span>
+                                          , 0);
+                                          
+                                          // Calculate available overtime (new function)
+                                          const availableOvertime = dateRange.reduce((sum, date) =>
+                                              sum + calculateAvailableOvertime(shift, date.toISOString().split('T')[0], employees)
+                                          , 0);
+                                          
+                                          // Render overtime display with separate colors
+                                          const renderOvertimeDisplay = () => {
+                                              if (activeOvertime > 0) {
+                                                  if (activeOvertime === availableOvertime) {
+                                                      return (
+                                                          <span className="text-xs bg-[#19b08d] text-white px-1 rounded">
+                                                              Overtime Active: {activeOvertime}
+                                                          </span>
+                                                      );
+                                                  } else {
+                                                      return (
+                                                          <>
+                                                              <span className="text-xs bg-[#19b08d] text-white px-1 rounded">
+                                                                  [Overtime Active: {activeOvertime}]
+                                                              </span>
+                                                              {' '}
+                                                              <span className="text-xs bg-[#ffd700] text-black px-1 rounded">
+                                                                  Available: {availableOvertime}
+                                                              </span>
+                                                          </>
+                                                      );
+                                                  }
+                                              } else if (availableOvertime > 0) {
+                                                  return (
+                                                      <span className="text-xs bg-[#ffd700] text-black px-1 rounded">
+                                                          Available: {availableOvertime}
+                                                      </span>
+                                                  );
+                                              } else {
+                                                  return <span className="text-xs">Available: 0</span>;
+                                              }
+                                          };
+
+                                          return renderOvertimeDisplay();
+                                      })()}
                                   </button>
                              </div>
                          </td>
 
                          {/* Preference Count Cell */}
-                         <td className="px-2 py-1 border border-gray-300 text-center" style={{ width: `${columnWidths.preferences}px` }}> {/* Width increased by 45% */}
+                         <td className="px-2 py-1 border border-gray-300 text-center" 
+                             style={{ width: `${columnWidths.preferences}px` }}
+                             title="Cantidad de empleados que prefieren este turno"> {/* Width increased by 45% */}
                              Pref: {preferenceCount}
                          </td>
 
                          {/* Preference Percentage Cell */}
-                         <td className="px-2 py-1 border border-gray-300 text-center" style={{ width: `${columnWidths.totalHours}px` }}> {/* Width increased by 45% */}
+                         <td className="px-2 py-1 border border-gray-300 text-center" 
+                             style={{ width: `${columnWidths.totalHours}px` }}
+                             title="Porcentaje de empleados que prefieren este turno"> {/* Width increased by 45% */}
                              {preferencePercentage}%
                          </td>
 

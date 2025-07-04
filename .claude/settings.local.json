@@ -32,7 +32,8 @@
       "Bash(rg:*)",
       "Bash(cd:*)",
       "Bash(find:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

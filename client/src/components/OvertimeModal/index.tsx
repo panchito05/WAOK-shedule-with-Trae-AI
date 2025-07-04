@@ -93,7 +93,14 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
   };
 
   const confirmGlobalOvertime = () => {
-    toggleGlobalOvertime(true);
+    // Always deactivate all specific overtimes when toggling global
+    shifts.forEach((shift, index) => {
+      if (shift.isOvertimeActive) {
+        toggleShiftOvertime(index, false);
+      }
+    });
+    
+    toggleGlobalOvertime(!isGlobalOvertimeActive);
     setShowConfirm(false);
     setShowSuccess(true);
     setTimeout(() => {
@@ -104,6 +111,11 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
 
   const confirmShiftOvertime = () => {
     if (typeof shift.index === 'number') {
+      // If global overtime is active, deactivate it first
+      if (isGlobalOvertimeActive && !shifts[shift.index]?.isOvertimeActive) {
+        toggleGlobalOvertime(false);
+      }
+      
       toggleShiftOvertime(shift.index, !shifts[shift.index]?.isOvertimeActive);
       setShowShiftConfirm(false);
       setShowSuccess(true);
@@ -141,15 +153,21 @@ const OvertimeModal: React.FC<OvertimeModalProps> = ({ isOpen, onClose, shift })
 
           <button 
             onClick={handleShiftOvertime}
+            disabled={isGlobalOvertimeActive && typeof shift.index === 'number' && !shifts[shift.index]?.isOvertimeActive}
             className={`w-full px-4 py-3 rounded transition-colors text-left flex items-center gap-2 ${
               typeof shift.index === 'number' && shifts[shift.index]?.isOvertimeActive
                 ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-[#19b08d] hover:bg-[#148a73]'
+                : isGlobalOvertimeActive && !shifts[shift.index]?.isOvertimeActive
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-[#19b08d] hover:bg-[#148a73]'
             } text-white`}
           >
             2. Add all missing overtime, but only for this specific shift
             {typeof shift.index === 'number' && shifts[shift.index]?.isOvertimeActive && (
               <span className="text-sm">(Currently Active)</span>
+            )}
+            {isGlobalOvertimeActive && typeof shift.index === 'number' && !shifts[shift.index]?.isOvertimeActive && (
+              <span className="text-sm">(Disabled - Global Overtime is Active)</span>
             )}
           </button>
 

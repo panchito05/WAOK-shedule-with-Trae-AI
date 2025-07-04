@@ -96,12 +96,13 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const newShifts = currentList.shifts.map(shift => ({
         ...shift,
         id: shift.id || `uid_${Math.random().toString(36).substr(2, 15)}`,
-        isOvertimeActive: !isGlobalOvertimeActive,
-        overtimeEntries: shift.overtimeEntries || []
+        isOvertimeActive: active,
+        // Clear all overtimeEntries when deactivating global overtime
+        overtimeEntries: !active ? [] : (shift.overtimeEntries || [])
       }));
       updateList(currentList.id, { shifts: newShifts });
     }
-  }, [getCurrentList, updateList, isGlobalOvertimeActive]);
+  }, [getCurrentList, updateList]);
 
   const toggleShiftOvertime = useCallback((index: number, active: boolean) => {
     const currentList = getCurrentList();
