@@ -1722,10 +1722,11 @@ const EmployeeScheduleTable: React.FC = () => {
             {/* Shift Rows */}
             {timeRanges.map((shift, index) => {
                  // Calculate preference count and percentage
+                 // Since 'employees' array already contains only selected employees, we don't need to check emp.selected
                  const preferenceCount = employees.filter(emp =>
-                    emp.selected && Array.isArray(emp.preferences) && emp.preferences[index] === 1
+                    Array.isArray(emp.shiftPreferences) && emp.shiftPreferences[index] === 1
                  ).length;
-                 const totalSelectedEmployees = employees.filter(emp => emp.selected).length;
+                 const totalSelectedEmployees = employees.length; // All employees in this array are already selected
                  const preferencePercentage = totalSelectedEmployees > 0
                     ? ((preferenceCount / totalSelectedEmployees) * 100).toFixed(2)
                     : '0.00';
