@@ -26,6 +26,7 @@ interface LeaveModalProps {
   onEdit: (leave: { id: string; startDate: string; endDate: string; type: string; hoursPerDay: number }) => void;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
+  initialDate?: string;
 }
 
 const leaveTypes = [
@@ -56,15 +57,23 @@ const LeaveModal: React.FC<LeaveModalProps> = ({
   onSave,
   onEdit,
   onDelete,
-  onArchive
+  onArchive,
+  initialDate
 }) => {
-  const [startDate, setStartDate] = useState('');
+  const [startDate, setStartDate] = useState(initialDate || '');
   const [endDate, setEndDate] = useState('');
   const [leaveType, setLeaveType] = useState('Paid Vacation');
   const [customLeaveType, setCustomLeaveType] = useState('');
   const [hoursPerDay, setHoursPerDay] = useState('8');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+
+  // Update startDate when modal opens with a new initialDate
+  React.useEffect(() => {
+    if (isOpen && initialDate && !editingId) {
+      setStartDate(initialDate);
+    }
+  }, [isOpen, initialDate, editingId]);
 
   const formatRange = (start: string, end: string) => {
     try {

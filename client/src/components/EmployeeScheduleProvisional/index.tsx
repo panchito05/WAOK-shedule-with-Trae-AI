@@ -2412,6 +2412,7 @@ const EmployeeScheduleTable: React.FC = () => {
            onEdit={(leave) => handleEditLeave(leaveModalState.employeeIndex!, leave)}
            onDelete={(leaveId) => handleDeleteLeave(leaveModalState.employeeIndex!, leaveId)}
            onArchive={(leaveId) => handleArchiveLeave(leaveModalState.employeeIndex!, leaveId)}
+           initialDate={leaveModalState.date}
          />
        )}
 

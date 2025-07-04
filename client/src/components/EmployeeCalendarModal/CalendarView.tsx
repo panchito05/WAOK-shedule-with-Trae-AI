@@ -13,7 +13,7 @@ const localizer = momentLocalizer(moment);
 interface ExtendedCalendarViewProps extends CalendarViewProps {
   shifts?: ShiftRow[];
   onShiftChange?: (employeeId: string, date: string, shiftId: string) => void;
-  onAddLeave?: () => void;
+  onAddLeave?: (date?: string) => void;
 }
 
 export const CalendarView: React.FC<ExtendedCalendarViewProps> = ({

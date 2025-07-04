@@ -19,7 +19,7 @@ interface AddShiftModalProps {
   employee: any;
   shifts: ShiftRow[];
   onAddShift: (employeeId: string, date: string, shiftId: string) => void;
-  onAddLeave?: () => void;
+  onAddLeave?: (date?: string) => void;
 }
 
 export const AddShiftModal: React.FC<AddShiftModalProps> = ({
@@ -69,7 +69,7 @@ export const AddShiftModal: React.FC<AddShiftModalProps> = ({
               date={format(date, 'yyyy-MM-dd')}
               onAddLeaveSelect={() => {
                 if (onAddLeave) {
-                  onAddLeave();
+                  onAddLeave(format(date, 'yyyy-MM-dd'));
                   onClose();
                 }
               }}

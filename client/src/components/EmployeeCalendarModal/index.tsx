@@ -371,7 +371,7 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
                 onNavigate={handleNavigate}
                 shifts={availableShifts}
                 onShiftChange={handleShiftChange}
-                onAddLeave={() => handleAddLeave()}
+                onAddLeave={handleAddLeave}
               />
             </div>
           </div>
@@ -409,6 +409,7 @@ export const EmployeeCalendarModal: React.FC<EmployeeCalendarProps> = ({
         onEdit={handleEditLeave}
         onDelete={handleDeleteLeave}
         onArchive={handleArchiveLeave}
+        initialDate={leaveModalState.date}
       />
     )}
     </>

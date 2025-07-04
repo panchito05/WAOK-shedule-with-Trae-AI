@@ -20,7 +20,7 @@ interface EventDetailModalProps {
   onEdit?: (event: CalendarEvent) => void;
   onDelete?: (event: CalendarEvent) => void;
   onShiftChange?: (employeeId: string, date: string, shiftId: string) => void;
-  onAddLeave?: () => void;
+  onAddLeave?: (date?: string) => void;
   shifts?: ShiftRow[];
   employee?: any;
 }
@@ -125,7 +125,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 date={format(event.start, 'yyyy-MM-dd')}
                 onAddLeaveSelect={() => {
                   if (onAddLeave) {
-                    onAddLeave();
+                    onAddLeave(format(event.start, 'yyyy-MM-dd'));
                     onClose();
                   }
                 }}
